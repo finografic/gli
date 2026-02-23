@@ -114,6 +114,12 @@ export interface RepoInfo {
   url: string;
 }
 
+export interface RepoSection {
+  repoInfo: RepoInfo | null;
+  pullRequests: PrStatus[];
+  error?: string;
+}
+
 /**
  * Get current repository info (name, owner/name, url).
  */

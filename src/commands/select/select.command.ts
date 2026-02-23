@@ -4,7 +4,7 @@ import { exit } from 'node:process';
 import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 
-import { readConfig } from '../../utils/config.utils.js';
+import { isCacheFresh, readCache, readConfig } from '../../utils/config.utils.js';
 import type { PrStatus } from '../../utils/gh.utils.js';
 import { assertGhAvailable, fetchMyOpenPrs } from '../../utils/gh.utils.js';
 import { printCommandHelp } from '../../utils/help.utils.js';
@@ -44,15 +44,20 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
     exit(1);
   }
 
-  // Fetch PRs (including drafts for select)
+  // Use cache if live is running and data is fresh; otherwise fetch from gh
   let pullRequests: PrStatus[];
-  try {
-    pullRequests = await fetchMyOpenPrs();
-  } catch (error: unknown) {
-    console.error(
-      `\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`,
-    );
-    exit(1);
+  const cache = readCache();
+  if (cache !== null && isCacheFresh({ cache })) {
+    pullRequests = cache.sections.flatMap((s) => s.pullRequests);
+  } else {
+    try {
+      pullRequests = await fetchMyOpenPrs();
+    } catch (error: unknown) {
+      console.error(
+        `\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`,
+      );
+      exit(1);
+    }
   }
 
   if (pullRequests.length === 0) {

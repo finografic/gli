@@ -10,21 +10,15 @@ import {
   SPINNER_INTERVAL_MS,
   SPINNER_SEQUENCE,
 } from '../../config/ui.constants.js';
-import { getConfigFilePath, readConfig, tildeify } from '../../utils/config.utils.js';
+import { getConfigFilePath, readConfig, tildeify, writeCache } from '../../utils/config.utils.js';
 import { isDaemonInstalled, isDaemonRunning } from '../../utils/daemon.utils.js';
-import type { PrStatus, RepoInfo } from '../../utils/gh.utils.js';
+import type { RepoInfo, RepoSection } from '../../utils/gh.utils.js';
 import { assertGhAvailable, fetchMyOpenPrs, fetchRepoInfo } from '../../utils/gh.utils.js';
 import { printCommandHelp } from '../../utils/help.utils.js';
 import { computeColumnWidths, formatPrLines, terminalLink } from '../../utils/pr-display.utils.js';
 
 interface RunLiveCommandParams {
   argv: string[];
-}
-
-export interface RepoSection {
-  repoInfo: RepoInfo | null;
-  pullRequests: PrStatus[];
-  error?: string;
 }
 
 /**
@@ -186,6 +180,7 @@ async function fetchAndDisplay(): Promise<void> {
   try {
     const config = readConfig();
     const sections = await fetchPrSections();
+    writeCache({ sections });
 
     const showTitle = config.prListing?.title?.display ?? false;
     const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;

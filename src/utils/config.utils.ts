@@ -3,11 +3,13 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 import {
+  DEFAULT_CACHE_MAX_AGE_SECONDS,
   DEFAULT_CHECK_INTERVAL,
   DEFAULT_LIVE_INTERVAL,
   DEFAULT_PR_TITLE_MAX_CHARS,
 } from '../config/defaults.constants.js';
 import { DEFAULT_PR_TITLE_SLICE_START } from '../config/ui.constants.js';
+import type { RepoSection } from './gh.utils.js';
 
 export interface RepoConfig {
   localPath: string;
@@ -53,6 +55,40 @@ export const CONFIG_DIR = join(
 );
 
 export const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
+export const CACHE_PATH = join(CONFIG_DIR, 'cache.json');
+
+export interface PrCache {
+  updatedAt: string;
+  sections: RepoSection[];
+}
+
+export const writeCache = ({ sections }: { sections: RepoSection[] }): void => {
+  mkdirSync(CONFIG_DIR, { recursive: true });
+  const cache: PrCache = { updatedAt: new Date().toISOString(), sections };
+  writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2), 'utf-8');
+};
+
+export const readCache = (): PrCache | null => {
+  if (!existsSync(CACHE_PATH)) return null;
+  try {
+    const raw = readFileSync(CACHE_PATH, 'utf-8');
+    const parsed = JSON.parse(raw) as PrCache;
+    if (typeof parsed.updatedAt !== 'string' || !Array.isArray(parsed.sections)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+export const isCacheFresh = (
+  { cache, maxAgeSeconds = DEFAULT_CACHE_MAX_AGE_SECONDS }: {
+    cache: PrCache;
+    maxAgeSeconds?: number;
+  },
+): boolean => {
+  const ageMs = Date.now() - new Date(cache.updatedAt).getTime();
+  return ageMs < maxAgeSeconds * 1000;
+};
 
 export const writeConfig = ({ config }: { config: GitCliConfig }): void => {
   mkdirSync(CONFIG_DIR, { recursive: true });
