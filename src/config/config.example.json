@@ -6,7 +6,7 @@
     }
   ],
   "checkInterval": 60,
-  "liveInterval": 5,
+  "liveInterval": 60,
   "notifyOn": ["BEHIND", "DIRTY"],
   "prListing": {
     "title": {

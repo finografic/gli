@@ -3,12 +3,13 @@ import { promisify } from 'node:util';
 
 const execAsync = promisify(exec);
 
-export interface CheckRun {
+export interface StatusCheckRollupItem {
   __typename: string;
-  conclusion: string;
-  status: string;
-  name: string;
-  workflowName: string;
+  conclusion?: string;
+  status?: string;
+  state?: string;
+  name?: string;
+  workflowName?: string;
 }
 
 export interface PrStatus {
@@ -21,8 +22,9 @@ export interface PrStatus {
   isDraft: boolean;
   updatedAt: string;
   url: string;
-  statusCheckRollup: CheckRun[];
+  statusCheckRollup: StatusCheckRollupItem[];
   reviewDecision: string;
+  unresolvedCommentsCount: number;
 }
 
 interface GhPrListItem {
@@ -35,8 +37,25 @@ interface GhPrListItem {
   isDraft: boolean;
   updatedAt: string;
   url: string;
-  statusCheckRollup: CheckRun[];
+  statusCheckRollup: StatusCheckRollupItem[];
   reviewDecision: string;
+}
+
+interface ReviewThreadsGraphqlResponse {
+  data?: {
+    repository?: {
+      pullRequests?: {
+        nodes?: Array<{
+          number?: number;
+          reviewThreads?: {
+            nodes?: Array<{
+              isResolved?: boolean;
+            }>;
+          };
+        }>;
+      };
+    };
+  };
 }
 
 export const assertGhAvailable = async (): Promise<void> => {
@@ -88,9 +107,70 @@ const parsePrListJson = ({ output }: { output: string }): PrStatus[] => {
           ? maybeItem.statusCheckRollup
           : [],
         reviewDecision: maybeItem.reviewDecision ?? '',
+        unresolvedCommentsCount: 0,
       };
     })
     .filter((pr): pr is PrStatus => pr !== null);
+};
+
+const extractOwnerAndNameFromPrUrl = ({
+  pullRequestUrl,
+}: {
+  pullRequestUrl: string;
+}): { owner: string; name: string } | null => {
+  const match = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/\d+/.exec(pullRequestUrl);
+
+  if (!match) return null;
+
+  return {
+    owner: match[1],
+    name: match[2],
+  };
+};
+
+const fetchUnresolvedCommentsCountByPrNumber = async ({
+  pullRequests,
+}: {
+  pullRequests: PrStatus[];
+}): Promise<Map<number, number>> => {
+  if (pullRequests.length === 0) {
+    return new Map();
+  }
+
+  const repositoryIdentity = extractOwnerAndNameFromPrUrl({
+    pullRequestUrl: pullRequests[0].url,
+  });
+
+  if (!repositoryIdentity) {
+    return new Map();
+  }
+
+  const openPullRequestNumbers = new Set(pullRequests.map((pullRequest) => pullRequest.number));
+
+  const graphqlQuery =
+    'query($owner:String!,$name:String!){repository(owner:$owner,name:$name){pullRequests(states:OPEN,first:100){nodes{number reviewThreads(first:100){nodes{isResolved}}}}}}';
+
+  const { stdout } = await execAsync(
+    `gh api graphql -F owner=${repositoryIdentity.owner} -F name=${repositoryIdentity.name} -f query='${graphqlQuery}'`,
+  );
+
+  const parsed = JSON.parse(stdout) as ReviewThreadsGraphqlResponse;
+  const nodes = parsed.data?.repository?.pullRequests?.nodes ?? [];
+
+  const unresolvedCountByPullRequestNumber = new Map<number, number>();
+
+  for (const node of nodes) {
+    if (typeof node.number !== 'number' || !openPullRequestNumbers.has(node.number)) {
+      continue;
+    }
+
+    const reviewThreads = node.reviewThreads?.nodes ?? [];
+    const unresolvedCount = reviewThreads.filter((thread) => thread.isResolved === false).length;
+
+    unresolvedCountByPullRequestNumber.set(node.number, unresolvedCount);
+  }
+
+  return unresolvedCountByPullRequestNumber;
 };
 
 export const fetchMyOpenPrs = async ({ repo }: { repo?: string } = {}): Promise<PrStatus[]> => {
@@ -98,7 +178,20 @@ export const fetchMyOpenPrs = async ({ repo }: { repo?: string } = {}): Promise<
   const { stdout } = await execAsync(
     `gh pr list --author "@me" --state open --json number,title,headRefName,baseRefName,mergeStateStatus,mergeable,isDraft,updatedAt,url,statusCheckRollup,reviewDecision${repoFlag}`,
   );
-  return parsePrListJson({ output: stdout });
+  const pullRequests = parsePrListJson({ output: stdout });
+
+  try {
+    const unresolvedCountByPullRequestNumber = await fetchUnresolvedCommentsCountByPrNumber({
+      pullRequests,
+    });
+
+    return pullRequests.map((pullRequest) => ({
+      ...pullRequest,
+      unresolvedCommentsCount: unresolvedCountByPullRequestNumber.get(pullRequest.number) ?? 0,
+    }));
+  } catch {
+    return pullRequests;
+  }
 };
 
 export const fetchDefaultBranch = async (): Promise<string> => {

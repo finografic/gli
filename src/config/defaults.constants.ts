@@ -1,4 +1,5 @@
-export const DEFAULT_LIVE_INTERVAL = 5;
+// export const DEFAULT_LIVE_INTERVAL = 5;
+export const DEFAULT_LIVE_INTERVAL = 60;
 export const DEFAULT_CHECK_INTERVAL = 60;
 export const DEFAULT_PR_TITLE_MAX_CHARS = 40;
 

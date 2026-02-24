@@ -8,26 +8,48 @@ interface StatusDisplay {
   label: string;
 }
 
+export function getUnresolvedCommentsBadge({ pr }: { pr: PrStatus }): string {
+  if (pr.unresolvedCommentsCount <= 0) return '';
+  return `💬\u2009${pc.dim(pr.unresolvedCommentsCount)}`;
+}
+
 /**
  * Get build status display (CI checks) for a PR.
  */
 export function getBuildStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
+  if (pr.mergeStateStatus === 'BEHIND') {
+    return { symbol: '⚠', color: pc.yellow, label: 'Rebase needed' };
+  }
+
   const checks = pr.statusCheckRollup;
 
   if (checks.length === 0) {
     return { symbol: '—', color: pc.dim, label: 'No CI' };
   }
 
-  const isBuilding = checks.some((c) => c.status === 'IN_PROGRESS' || c.status === 'QUEUED');
-  if (isBuilding) {
-    return { symbol: '⋯', color: pc.dim, label: 'Building' };
+  const hasFailed = checks.some((check) => {
+    const conclusion = (check.conclusion ?? '').toUpperCase();
+    const state = (check.state ?? '').toUpperCase();
+
+    return conclusion === 'FAILURE'
+      || conclusion === 'ERROR'
+      || conclusion === 'TIMED_OUT'
+      || conclusion === 'STARTUP_FAILURE'
+      || state === 'FAILURE'
+      || state === 'ERROR';
+  });
+
+  if (hasFailed) {
+    return { symbol: '✗', color: pc.red, label: 'Build failed' };
   }
 
-  const hasFailed = checks.some(
-    (c) => c.conclusion === 'FAILURE' || c.conclusion === 'ERROR' || c.conclusion === 'TIMED_OUT',
-  );
-  if (hasFailed) {
-    return { symbol: '✗', color: pc.red, label: 'Failed' };
+  const isBuilding = checks.some((check) => {
+    const status = (check.status ?? check.state ?? '').toUpperCase();
+    return status === 'IN_PROGRESS' || status === 'QUEUED' || status === 'PENDING';
+  });
+
+  if (isBuilding) {
+    return { symbol: '⋯', color: pc.dim, label: 'Building' };
   }
 
   return { symbol: '✓', color: pc.green, label: 'Build passed' };
@@ -39,10 +61,6 @@ export function getBuildStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
 export function getApprovalStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
   if (pr.mergeStateStatus === 'DIRTY') {
     return { symbol: '✗', color: pc.red, label: 'Conflicts' };
-  }
-
-  if (pr.mergeStateStatus === 'BEHIND') {
-    return { symbol: '⚠', color: pc.yellow, label: 'Rebase needed' };
   }
 
   switch (pr.reviewDecision) {
@@ -73,7 +91,15 @@ export function terminalLink({ url, label }: { url: string; label: string }): st
  * Format a single PR line for display with proper column alignment.
  */
 export function formatPrLine(
-  { pr, prNumWidth = 0, branchWidth = 0, titleWidth = 0, titleSliceStart = 0, buildWidth = 0 }: {
+  {
+    pr,
+    prNumWidth = 0,
+    branchWidth = 0,
+    titleWidth = 0,
+    titleSliceStart = 0,
+    buildWidth = 0,
+    commentsWidth = 0,
+  }: {
     pr: PrStatus;
     prNumWidth?: number;
     branchWidth?: number;
@@ -81,6 +107,7 @@ export function formatPrLine(
     /** Skip this many characters from the start of the title before truncating. */
     titleSliceStart?: number;
     buildWidth?: number;
+    commentsWidth?: number;
   },
 ): string {
   // PR number with "PR#" prefix in magenta (clickable)
@@ -100,10 +127,15 @@ export function formatPrLine(
   const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
   const approvalStatusText = approvalDisplay.color(approvalText);
 
+  const unresolvedCommentsBadge = getUnresolvedCommentsBadge({ pr });
+
   // Calculate padding (accounting for color codes that don't take space)
   const prNumPadding = prNumWidth > 0 ? prNumWidth - prNumText.length : 0;
   const branchPadding = branchWidth > 0 ? branchWidth - pr.headRefName.length : 0;
   const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
+  const commentsPadding = commentsWidth > 0
+    ? commentsWidth - unresolvedCommentsBadge.length
+    : 0;
 
   // Optional title column — trim front/back whitespace, then slice from start
   let titlePart = '';
@@ -118,9 +150,15 @@ export function formatPrLine(
     titlePart = `  ${pc.white(truncated)}${' '.repeat(titleWidth - truncated.length)}`;
   }
 
+  const commentsPart = commentsWidth > 0
+    ? `  ${unresolvedCommentsBadge}${' '.repeat(commentsPadding)}`
+    : '';
+
   return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${
     ' '.repeat(branchPadding)
-  }${titlePart}  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}`;
+  }${titlePart}  ${buildStatusText}${
+    ' '.repeat(buildPadding)
+  }  ${approvalStatusText}${commentsPart}`;
 }
 
 interface FormatPrLinesParams {
@@ -132,6 +170,7 @@ interface FormatPrLinesParams {
   prNumWidth?: number;
   branchWidth?: number;
   buildWidth?: number;
+  commentsWidth?: number;
 }
 
 /**
@@ -147,6 +186,7 @@ export function formatPrLines(
     prNumWidth: prNumWidthOverride,
     branchWidth: branchWidthOverride,
     buildWidth: buildWidthOverride,
+    commentsWidth: commentsWidthOverride,
   }: FormatPrLinesParams,
 ): string[] {
   if (prs.length === 0) return [];
@@ -167,8 +207,19 @@ export function formatPrLines(
       }),
     );
 
+  const commentsWidth = commentsWidthOverride
+    ?? Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length));
+
   return prs.map((pr) =>
-    formatPrLine({ pr, prNumWidth, branchWidth, titleWidth, titleSliceStart, buildWidth })
+    formatPrLine({
+      pr,
+      prNumWidth,
+      branchWidth,
+      titleWidth,
+      titleSliceStart,
+      buildWidth,
+      commentsWidth,
+    })
   );
 }
 
@@ -180,9 +231,10 @@ export function computeColumnWidths({ prs }: { prs: PrStatus[] }): {
   prNumWidth: number;
   branchWidth: number;
   buildWidth: number;
+  commentsWidth: number;
 } {
   if (prs.length === 0) {
-    return { prNumWidth: 0, branchWidth: 0, buildWidth: 0 };
+    return { prNumWidth: 0, branchWidth: 0, buildWidth: 0, commentsWidth: 0 };
   }
   return {
     prNumWidth: Math.max(...prs.map((pr) => `PR#${pr.number}`.length)),
@@ -193,6 +245,7 @@ export function computeColumnWidths({ prs }: { prs: PrStatus[] }): {
         return `${d.symbol} ${d.label}`.length;
       }),
     ),
+    commentsWidth: Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length)),
   };
 }
 

@@ -37,7 +37,7 @@ gli live    # Start live dashboard (refreshes every 5s)
 
 Perfect for keeping a terminal panel open to monitor your pull requests in real-time. Shows:
 
-- PR list with status indicators with build and approval columns
+- PR list with status indicators, including build and approval columns plus unresolved comments (`💬 N`) when present
 - Clickable PR numbers and repo names
 - Config and daemon status
 
