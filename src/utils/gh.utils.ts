@@ -12,6 +12,10 @@ export interface StatusCheckRollupItem {
   workflowName?: string;
 }
 
+export interface LatestReview {
+  state: string;
+}
+
 export interface PrStatus {
   number: number;
   title: string;
@@ -24,6 +28,7 @@ export interface PrStatus {
   url: string;
   statusCheckRollup: StatusCheckRollupItem[];
   reviewDecision: string;
+  latestReviews: LatestReview[];
   unresolvedCommentsCount: number;
 }
 
@@ -39,6 +44,7 @@ interface GhPrListItem {
   url: string;
   statusCheckRollup: StatusCheckRollupItem[];
   reviewDecision: string;
+  latestReviews: LatestReview[];
 }
 
 interface ReviewThreadsGraphqlResponse {
@@ -107,6 +113,7 @@ const parsePrListJson = ({ output }: { output: string }): PrStatus[] => {
           ? maybeItem.statusCheckRollup
           : [],
         reviewDecision: maybeItem.reviewDecision ?? '',
+        latestReviews: Array.isArray(maybeItem.latestReviews) ? maybeItem.latestReviews : [],
         unresolvedCommentsCount: 0,
       };
     })
@@ -176,7 +183,7 @@ const fetchUnresolvedCommentsCountByPrNumber = async ({
 export const fetchMyOpenPrs = async ({ repo }: { repo?: string } = {}): Promise<PrStatus[]> => {
   const repoFlag = repo ? ` --repo ${repo}` : '';
   const { stdout } = await execAsync(
-    `gh pr list --author "@me" --state open --json number,title,headRefName,baseRefName,mergeStateStatus,mergeable,isDraft,updatedAt,url,statusCheckRollup,reviewDecision${repoFlag}`,
+    `gh pr list --author "@me" --state open --json number,title,headRefName,baseRefName,mergeStateStatus,mergeable,isDraft,updatedAt,url,statusCheckRollup,reviewDecision,latestReviews${repoFlag}`,
   );
   const pullRequests = parsePrListJson({ output: stdout });
 

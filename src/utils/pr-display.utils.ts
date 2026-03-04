@@ -65,13 +65,14 @@ export function getBuildStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
 export function getApprovalStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
   switch (pr.reviewDecision) {
     case 'APPROVED': {
-      return { symbol: '✓', color: pc.green, label: 'Approved' };
+      const approvalCount = pr.latestReviews.filter((r) => r.state === 'APPROVED').length;
+      return { symbol: '✓', color: pc.green, label: `Approvals: ${approvalCount}` };
     }
     case 'CHANGES_REQUESTED': {
       return { symbol: '○', color: pc.red, label: 'Changes requested' };
     }
     case 'REVIEW_REQUIRED': {
-      return { symbol: '○', color: pc.white, label: 'Awaiting review' };
+      return { symbol: '○', color: pc.white, label: 'Approvals: 0' };
     }
     default: {
       return { symbol: '✓', color: pc.dim, label: 'Can be merged' };
