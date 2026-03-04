@@ -17,6 +17,10 @@ export function getUnresolvedCommentsBadge({ pr }: { pr: PrStatus }): string {
  * Get build status display (CI checks) for a PR.
  */
 export function getBuildStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
+  if (pr.mergeStateStatus === 'DIRTY') {
+    return { symbol: '✗', color: pc.red, label: 'Conflicts' };
+  }
+
   if (pr.mergeStateStatus === 'BEHIND') {
     return { symbol: '⚠', color: pc.yellow, label: 'Rebase needed' };
   }
@@ -59,10 +63,6 @@ export function getBuildStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
  * Get approval status display (review decision + merge readiness) for a PR.
  */
 export function getApprovalStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
-  if (pr.mergeStateStatus === 'DIRTY') {
-    return { symbol: '✗', color: pc.red, label: 'Conflicts' };
-  }
-
   switch (pr.reviewDecision) {
     case 'APPROVED': {
       return { symbol: '✓', color: pc.green, label: 'Approved' };
