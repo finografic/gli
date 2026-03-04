@@ -69,7 +69,7 @@ export function getApprovalStatusDisplay({ pr }: { pr: PrStatus }): StatusDispla
       return { symbol: '✓', color: pc.green, label: `Approvals: ${approvalCount}` };
     }
     case 'CHANGES_REQUESTED': {
-      return { symbol: '○', color: pc.red, label: 'Changes requested' };
+      return { symbol: '⚠', color: pc.red, label: 'Changes requested' };
     }
     case 'REVIEW_REQUIRED': {
       return { symbol: '○', color: pc.white, label: 'Approvals: 0' };
