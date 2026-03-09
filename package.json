@@ -41,11 +41,10 @@
     "gli": "./dist/cli.mjs"
   },
   "scripts": {
-    "========== DEV": "=======================================================",
+    "·········· DEV+BUILD": "·················································",
     "dev": "tsdown --watch",
     "link": "pnpm build && pnpm link --global",
     "unlink": "pnpm unlink --global",
-    "·········· BUILD": "·····················································",
     "build": "tsdown",
     "·········· TESTING": "···················································",
     "test": "vitest",
@@ -63,7 +62,7 @@
     "release.github.major": "pnpm run release.check && pnpm version major && git push --follow-tags",
     "release.check": "pnpm format.check && pnpm lint.fix && pnpm typecheck && pnpm test.run",
     "release.publish": "pnpm publish --registry https://npm.pkg.github.com",
-    "·········· REGISTRIES": "··············································",
+    "·········· REGISTRIES": "················································",
     "view.registry.github": "pnpm view @finografic/git-cli --registry=https://npm.pkg.github.com",
     "·········· PACKAGES": "··················································",
     "update.eslint-config": "pnpm update @finografic/eslint-config --latest",
@@ -72,7 +71,6 @@
     "·········· UTILS": "·····················································",
     "tsc.debug": "tsc --pretty --project tsconfig.json",
     "typecheck": "tsc --project tsconfig.json --noEmit",
-    "·········· HOOKS": "·····················································",
     "prepack": "pnpm build",
     "prepare": "simple-git-hooks",
     "dev.cli": "NODE_ENV=development tsx src/cli.ts --"

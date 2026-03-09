@@ -150,7 +150,10 @@ export async function fetchPrSections(): Promise<RepoSection[]> {
         try {
           const repoInfo = await fetchRepoInfo({ repo: repo.remote });
           const allPrs = await fetchMyOpenPrs({ repo: repo.remote });
-          return { repoInfo, pullRequests: allPrs.filter((pr) => !pr.isDraft) };
+          return {
+            repoInfo,
+            pullRequests: allPrs.filter((pr) => !pr.isDraft),
+          };
         } catch (error: unknown) {
           return {
             repoInfo: null,

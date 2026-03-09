@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { cwd } from 'node:process';
 import { exit } from 'node:process';
 
 import * as clack from '@clack/prompts';
@@ -8,7 +9,7 @@ import { isCacheFresh, readCache, readConfig } from '../../utils/config.utils.js
 import type { PrStatus } from '../../utils/gh.utils.js';
 import { assertGhAvailable, fetchMyOpenPrs } from '../../utils/gh.utils.js';
 import { printCommandHelp } from '../../utils/help.utils.js';
-import { formatPrLines } from '../../utils/pr-display.utils.js';
+import { formatPrLines, formatSelectOptions } from '../../utils/pr-display.utils.js';
 
 interface RunSelectCommandParams {
   argv: string[];
@@ -44,14 +45,43 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
     exit(1);
   }
 
-  // Use cache if live is running and data is fresh; otherwise fetch from gh
+  const config = readConfig();
+
+  // Match cwd against a configured repo localPath (support being in a subdirectory)
+  const currentDir = cwd();
+  const matchedRepo = config.repos.find((repo) =>
+    currentDir === repo.localPath || currentDir.startsWith(`${repo.localPath}/`)
+  );
+
+  if (config.repos.length > 0 && matchedRepo === undefined) {
+    console.log('');
+    console.error(
+      pc.red('✗ Current directory is not a configured repo path.'),
+    );
+    console.error(
+      pc.dim(
+        `  Run ${pc.white('gli select')} from within one of your configured repo directories.`,
+      ),
+    );
+    console.log('');
+    exit(1);
+  }
+
+  // Use cache if live is running and data is fresh; otherwise fetch from gh.
+  // When a matched repo is known, scope both cache lookup and fresh fetch to that repo only.
   let pullRequests: PrStatus[];
   const cache = readCache();
   if (cache !== null && isCacheFresh({ cache })) {
-    pullRequests = cache.sections.flatMap((s) => s.pullRequests);
+    pullRequests = matchedRepo !== undefined
+      ? cache.sections
+        .filter((s) => s.repoInfo?.url === matchedRepo.remote)
+        .flatMap((s) => s.pullRequests)
+      : cache.sections.flatMap((s) => s.pullRequests);
   } else {
     try {
-      pullRequests = await fetchMyOpenPrs();
+      pullRequests = await fetchMyOpenPrs(
+        matchedRepo !== undefined ? { repo: matchedRepo.remote } : undefined,
+      );
     } catch (error: unknown) {
       console.error(
         `\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`,
@@ -62,7 +92,13 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
 
   if (pullRequests.length === 0) {
     console.log('');
-    console.log(pc.yellow('No open PRs found for your account in this repository.'));
+    console.log(
+      pc.yellow(
+        `No open PRs found for your account${
+          matchedRepo !== undefined ? ` in ${matchedRepo.remote}` : ''
+        }.`,
+      ),
+    );
     console.log('');
     exit(0);
   }
@@ -71,13 +107,10 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
   console.log(pc.bold('🌿 Select Branch'));
   console.log('');
 
-  const config = readConfig();
-
-  // Display PR list with aligned columns
+  // Display PR list with aligned columns — title suppressed here; shown in select options instead
   const formattedLines = formatPrLines({
     prs: pullRequests,
-    showTitle: config.prListing?.title?.display,
-    titleMaxChars: config.prListing?.title?.maxChars,
+    showTitle: false,
   });
   for (const line of formattedLines) {
     console.log(`  ${line}`);
@@ -85,11 +118,12 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
 
   console.log('');
 
-  // Interactive selection
-  const options = pullRequests.map((pr) => ({
-    value: pr.headRefName,
-    label: pr.headRefName,
-  }));
+  // Interactive selection — branch name (aligned) + dim title in each option
+  const options = formatSelectOptions({
+    prs: pullRequests,
+    titleMaxChars: config.prListing?.title?.maxChars,
+    titleSliceStart: config.prListing?.title?.sliceStart,
+  });
 
   const selectedBranch = await clack.select({
     message: 'Select a branch to checkout:',

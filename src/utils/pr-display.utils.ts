@@ -44,7 +44,7 @@ export function getBuildStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
   });
 
   if (hasFailed) {
-    return { symbol: '✗', color: pc.red, label: 'Build failed' };
+    return { symbol: '❌', color: pc.red, label: 'Build failed' };
   }
 
   const isBuilding = checks.some((check) => {
@@ -53,31 +53,54 @@ export function getBuildStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
   });
 
   if (isBuilding) {
-    return { symbol: '⋯', color: pc.dim, label: 'Building' };
+    return { symbol: '🚧', color: pc.dim, label: 'Building' };
   }
 
-  return { symbol: '✓', color: pc.green, label: 'Build passed' };
+  return { symbol: '🟢', color: pc.green, label: 'Build passed' };
 }
 
 /**
  * Get approval status display (review decision + merge readiness) for a PR.
  */
 export function getApprovalStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
+  const approvalCount = pr.latestReviews.filter((r) => r.state === 'APPROVED').length;
+
   switch (pr.reviewDecision) {
     case 'APPROVED': {
-      const approvalCount = pr.latestReviews.filter((r) => r.state === 'APPROVED').length;
-      return { symbol: '✓', color: pc.green, label: `Approvals: ${approvalCount}` };
+      return { symbol: '✅', color: pc.green, label: `Approvals: ${approvalCount}` };
     }
     case 'CHANGES_REQUESTED': {
-      return { symbol: '⚠', color: pc.red, label: 'Changes requested' };
+      return { symbol: '❗', color: pc.red, label: 'Changes requested' };
     }
     case 'REVIEW_REQUIRED': {
-      return { symbol: '○', color: pc.white, label: 'Approvals: 0' };
+      const symbol = approvalCount === 1 ? '☑️' : '➖';
+      return { symbol, color: pc.white, label: `Approvals: ${approvalCount}` };
     }
     default: {
-      return { symbol: '✓', color: pc.dim, label: 'Can be merged' };
+      return { symbol: '✅', color: pc.dim, label: 'Can be merged' };
     }
   }
+}
+
+/**
+ * Slice, trim, and truncate a PR title for display.
+ */
+export function truncatePrTitle(
+  {
+    title,
+    maxChars,
+    sliceStart = 0,
+  }: {
+    title: string;
+    maxChars: number;
+    sliceStart?: number;
+  },
+): string {
+  let text = title.replace('  ', ' ').trim();
+  if (sliceStart > 0) {
+    text = text.slice(sliceStart).trim();
+  }
+  return text.length > maxChars ? `${text.slice(0, maxChars - 1)}…` : text;
 }
 
 /**
@@ -141,13 +164,11 @@ export function formatPrLine(
   // Optional title column — trim front/back whitespace, then slice from start
   let titlePart = '';
   if (titleWidth > 0) {
-    let titleText = pr.title.trim();
-    if (titleSliceStart > 0) {
-      titleText = titleText.slice(titleSliceStart).trim();
-    }
-    const truncated = titleText.length > titleWidth
-      ? `${titleText.slice(0, titleWidth - 1)}…`
-      : titleText;
+    const truncated = truncatePrTitle({
+      title: pr.title,
+      maxChars: titleWidth,
+      sliceStart: titleSliceStart,
+    });
     titlePart = `  ${pc.white(truncated)}${' '.repeat(titleWidth - truncated.length)}`;
   }
 
@@ -248,6 +269,37 @@ export function computeColumnWidths({ prs }: { prs: PrStatus[] }): {
     ),
     commentsWidth: Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length)),
   };
+}
+
+/**
+ * Format PR options for a clack select prompt.
+ * Each option has the branch name (aligned, cyan) followed by the truncated title (dim).
+ */
+export function formatSelectOptions(
+  {
+    prs,
+    titleMaxChars = 40,
+    titleSliceStart = 0,
+  }: {
+    prs: PrStatus[];
+    titleMaxChars?: number;
+    titleSliceStart?: number;
+  },
+): Array<{ value: string; label: string }> {
+  const branchWidth = Math.max(...prs.map((pr) => pr.headRefName.length));
+
+  return prs.map((pr) => {
+    const branch = pc.cyan(pr.headRefName.padEnd(branchWidth));
+    const truncated = truncatePrTitle({
+      title: pr.title,
+      maxChars: titleMaxChars,
+      sliceStart: titleSliceStart,
+    });
+    return {
+      value: pr.headRefName,
+      label: `${branch}  ${pc.dim(truncated)}`,
+    };
+  });
 }
 
 /**
