@@ -6,174 +6,43 @@ import {
   DEFAULT_PR_TITLE_MAX_CHARS,
 } from '../../config/defaults.constants.js';
 import {
+  COMPACT_TOGGLE_KEY,
   DEFAULT_PR_TITLE_SLICE_START,
   SPINNER_INTERVAL_MS,
   SPINNER_SEQUENCE,
 } from '../../config/ui.constants.js';
-import { getConfigFilePath, readConfig, tildeify, writeCache } from '../../utils/config.utils.js';
-import { isDaemonInstalled, isDaemonRunning } from '../../utils/daemon.utils.js';
-import type { RepoInfo, RepoSection } from '../../utils/gh.utils.js';
-import { assertGhAvailable, fetchMyOpenPrs, fetchRepoInfo } from '../../utils/gh.utils.js';
+import { readConfig, writeCache } from '../../utils/config.utils.js';
+import type { RepoSection } from '../../utils/gh.utils.js';
+import { assertGhAvailable } from '../../utils/gh.utils.js';
 import { printCommandHelp } from '../../utils/help.utils.js';
-import { computeColumnWidths, formatPrLines, terminalLink } from '../../utils/pr-display.utils.js';
+import { fetchPrSections, renderDisplay } from '../../utils/pr-sections.utils.js';
 
 interface RunLiveCommandParams {
   argv: string[];
 }
 
-/**
- * Render the PR status display. Used by both `gli live` (loop) and `gli status` (once).
- * Pass `isLive: true` to include the refresh hint footer line.
- */
-export function renderDisplay(
-  {
-    sections,
+// Module-level state shared between fetchAndDisplay, renderFromCache, and the keypress handler
+let isCompact = false;
+let cachedSections: RepoSection[] | null = null;
+
+function renderFromCache(): void {
+  if (!cachedSections) return;
+  const config = readConfig();
+  const showTitle = config.prListing?.title?.display ?? false;
+  const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
+  const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
+  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL;
+  const output = renderDisplay({
+    sections: cachedSections,
     showTitle,
     titleMaxChars,
     titleSliceStart,
     liveInterval,
-    isLive,
-  }: {
-    sections: RepoSection[];
-    showTitle: boolean;
-    titleMaxChars: number;
-    titleSliceStart: number;
-    liveInterval: number;
-    isLive: boolean;
-  },
-): string {
-  const lines: string[] = [];
-
-  // Header with 24h time (no timezone)
-  const now = new Date();
-  lines.push('');
-  lines.push(
-    `${pc.bold('📊 PRs LIVE Status')} ${
-      pc.dim(
-        `- refreshed ${
-          now.toLocaleTimeString('en-US', {
-            hour12: false,
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })
-        }`,
-      )
-    }`,
-  );
-  lines.push('');
-
-  // One section per repo — skip repos with no PRs and no error
-  const visibleSections = sections.filter((s) => s.error || s.pullRequests.length > 0);
-
-  if (visibleSections.length === 0) {
-    lines.push(pc.dim('  No open PRs found'));
-    lines.push('');
-  }
-
-  // Compute column widths across ALL repos for even alignment
-  const allPrs = visibleSections.flatMap((s) => s.pullRequests);
-  const globalWidths = computeColumnWidths({ prs: allPrs });
-
-  for (const { repoInfo, pullRequests, error } of visibleSections) {
-    if (repoInfo) {
-      const pullsUrl = `${repoInfo.url}/pulls`;
-      const repoLink = terminalLink({
-        url: pullsUrl,
-        label: pc.bold(pc.white(repoInfo.nameWithOwner)),
-      });
-      lines.push(`  ${repoLink}`);
-      lines.push('');
-    }
-
-    if (error) {
-      lines.push(`  ${pc.red('✗')} ${pc.dim(error)}`);
-    } else {
-      const formattedLines = formatPrLines({
-        prs: pullRequests,
-        showTitle,
-        titleMaxChars,
-        titleSliceStart,
-        ...globalWidths,
-      });
-      for (const line of formattedLines) {
-        lines.push(`  ${line}`);
-      }
-    }
-
-    lines.push('');
-  }
-
-  // Metadata Footer
-  const daemonInstalled = isDaemonInstalled();
-  const daemonRunning = isDaemonRunning();
-
-  // Calculate label width for alignment
-  const labels = ['config:', 'daemon:'];
-  const labelWidth = Math.max(...labels.map((l) => l.length));
-
-  // Daemon status
-  const daemonStatus = daemonRunning
-    ? pc.green('✓ running')
-    : daemonInstalled
-    ? pc.yellow('○ installed, not running')
-    : pc.dim('not installed');
-  lines.push(`  ${pc.white('daemon:'.padEnd(labelWidth))}  ${daemonStatus}`);
-
-  // Config info
-  lines.push(
-    `  ${pc.white('config:'.padEnd(labelWidth))}  ${pc.dim(tildeify(getConfigFilePath()))}`,
-  );
-
-  lines.push('');
-
-  if (isLive) {
-    lines.push(
-      pc.dim(`  Refreshing every ${liveInterval}s · Press Ctrl+C to exit`),
-    );
-  }
-
-  lines.push('');
-
-  return lines.join('\n');
-}
-
-/**
- * Fetch PR sections from all configured repos (or current directory as fallback).
- */
-export async function fetchPrSections(): Promise<RepoSection[]> {
-  const config = readConfig();
-
-  if (config.repos.length > 0) {
-    return Promise.all(
-      config.repos.map(async (repo) => {
-        try {
-          const repoInfo = await fetchRepoInfo({ repo: repo.remote });
-          const allPrs = await fetchMyOpenPrs({ repo: repo.remote });
-          return {
-            repoInfo,
-            pullRequests: allPrs.filter((pr) => !pr.isDraft),
-          };
-        } catch (error: unknown) {
-          return {
-            repoInfo: null,
-            pullRequests: [],
-            error: error instanceof Error ? error.message : 'Unknown error',
-          };
-        }
-      }),
-    );
-  }
-
-  // No configured repos — fall back to current directory
-  let repoInfo: RepoInfo | null = null;
-  try {
-    repoInfo = await fetchRepoInfo();
-  } catch {
-    // Not critical
-  }
-  const allPrs = await fetchMyOpenPrs();
-  return [{ repoInfo, pullRequests: allPrs.filter((pr) => !pr.isDraft) }];
+    isLive: true,
+    compact: isCompact,
+    jiraBaseUrl: config.jiraBaseUrl,
+  });
+  logUpdate(output);
 }
 
 /**
@@ -183,6 +52,7 @@ async function fetchAndDisplay(): Promise<void> {
   try {
     const config = readConfig();
     const sections = await fetchPrSections();
+    cachedSections = sections;
     writeCache({ sections });
 
     const showTitle = config.prListing?.title?.display ?? false;
@@ -197,6 +67,8 @@ async function fetchAndDisplay(): Promise<void> {
       titleSliceStart,
       liveInterval,
       isLive: true,
+      compact: isCompact,
+      jiraBaseUrl: config.jiraBaseUrl,
     });
 
     logUpdate(output);
@@ -231,7 +103,12 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
       command: 'gli live',
       description: 'Live-updating PR status dashboard (⭐ RECOMMENDED)',
       usage: 'gli live',
-      options: [],
+      options: [
+        {
+          flag: '--compact',
+          description: `Start in compact view (toggle anytime with [${COMPACT_TOGGLE_KEY}])`,
+        },
+      ],
       examples: [
         {
           command: 'gli live',
@@ -272,6 +149,29 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
     process.exit(1);
   }
 
+  // Set initial compact state from flag
+  isCompact = argv.includes('--compact');
+
+  // Set up raw keypress listener for hotkey toggle.
+  // Wrapped in try/catch because setRawMode throws when stdin is not a TTY
+  // (e.g. piped environments, some pnpm wrappers).
+  try {
+    process.stdin.setEncoding('utf8');
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.on('data', (key: string) => {
+      if (key === COMPACT_TOGGLE_KEY) {
+        isCompact = !isCompact;
+        renderFromCache();
+      } else if (key === '\x03' || key === 'q') {
+        // Ctrl+C or q — exit cleanly
+        process.exit(0);
+      }
+    });
+  } catch {
+    // Not a TTY — hotkey unavailable, Ctrl+C handled by default SIGINT
+  }
+
   // Clear console and show animated spinner while first async fetch runs.
   console.clear();
   const stopSpinner = startSpinner();
@@ -286,7 +186,4 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
   setInterval(() => {
     fetchAndDisplay();
   }, intervalMs);
-
-  // Keep process alive
-  process.stdin.resume();
 }

@@ -6,9 +6,10 @@ import pc from 'picocolors';
 
 import { readConfig } from '../../utils/config.utils.js';
 import type { PrStatus } from '../../utils/gh.utils.js';
-import { assertGhAvailable, fetchDefaultBranch, fetchMyOpenPrs } from '../../utils/gh.utils.js';
+import { assertGhAvailable, fetchDefaultBranch } from '../../utils/gh.utils.js';
 import { printCommandHelp } from '../../utils/help.utils.js';
 import { formatPrLines, getPrSummary } from '../../utils/pr-display.utils.js';
+import { fetchPrSections } from '../../utils/pr-sections.utils.js';
 
 interface RunRebaseCommandParams {
   argv: string[];
@@ -21,6 +22,7 @@ interface RebaseBranchParams {
   interactive: boolean;
   squash: boolean;
   dryRun: boolean;
+  yes: boolean;
 }
 
 interface RebaseBranchResult {
@@ -65,6 +67,7 @@ const rebaseBranch = async ({
   interactive,
   squash,
   dryRun,
+  yes,
 }: RebaseBranchParams): Promise<RebaseBranchResult> => {
   if (dryRun) {
     const mode = squash ? 'squash and rebase' : interactive ? 'interactively rebase' : 'rebase';
@@ -158,14 +161,18 @@ const rebaseBranch = async ({
   }
 
   // Force-push confirmation
-  const shouldPush = await clack.confirm({
-    message: `Force-push ${pc.cyan(branch)} to origin?`,
-    initialValue: false,
-  });
+  if (yes) {
+    console.log(`  ${pc.dim('→')} Auto-pushing with --force-with-lease ${pc.dim('(-y)')}`);
+  } else {
+    const shouldPush = await clack.confirm({
+      message: `Force-push ${pc.cyan(branch)} to origin?`,
+      initialValue: false,
+    });
 
-  if (clack.isCancel(shouldPush) || !shouldPush) {
-    console.log(`  ${pc.dim('○')} Skipped push`);
-    return { success: true, aborted: false };
+    if (clack.isCancel(shouldPush) || !shouldPush) {
+      console.log(`  ${pc.dim('○')} Skipped push`);
+      return { success: true, aborted: false };
+    }
   }
 
   // Push with --force-with-lease
@@ -191,6 +198,7 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
   const interactive = argv.includes('-i') || argv.includes('--interactive');
   const squash = argv.includes('-s') || argv.includes('--squash');
   const stay = argv.includes('--stay');
+  const yes = argv.includes('-y');
 
   if (argv.includes('--help') || argv.includes('-h')) {
     printCommandHelp({
@@ -201,6 +209,11 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
         {
           flag: '--all',
           description: 'Rebase all branches that need it (with confirmation)',
+        },
+        {
+          flag: '-y',
+          description:
+            'Auto-accept per-branch rebase and push prompts (does not skip the initial --all confirm)',
         },
         {
           flag: '-i, --interactive',
@@ -240,6 +253,10 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
           command: 'gli rebase --all --stay',
           description: 'Rebase all, stay on last branch',
         },
+        {
+          command: 'gli rebase --all -y',
+          description: 'Rebase all stale branches, auto-confirm each rebase and push',
+        },
       ],
       howItWorks: [
         'Fetches your open PRs and shows status',
@@ -278,7 +295,9 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
   console.log(`  ${pc.dim('•')} Fetching your open PRs...`);
   let allPrs: PrStatus[];
   try {
-    allPrs = await fetchMyOpenPrs();
+    // fetchPrSections falls back to the current repo when none are configured
+    const sections = await fetchPrSections();
+    allPrs = sections.flatMap((s) => s.pullRequests);
   } catch (error: unknown) {
     console.log(`  ${pc.red('✗')} Failed to fetch PRs`);
     console.log(`    ${pc.red(error instanceof Error ? error.message : 'Unknown error')}`);
@@ -292,11 +311,13 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
 
   const config = readConfig();
 
-  // Show full report (all PRs)
+  // Show full report (all PRs) — compact by default in rebase context
   const formattedLines = formatPrLines({
     prs: pullRequests,
     showTitle: config.prListing?.title?.display,
     titleMaxChars: config.prListing?.title?.maxChars,
+    compact: true,
+    jiraBaseUrl: config.jiraBaseUrl,
   });
   for (const line of formattedLines) {
     console.log(`  ${line}`);
@@ -387,6 +408,25 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
     );
     console.log('');
 
+    // Per-branch confirm (only in --all mode; auto-accepted with -y)
+    if (all && !dryRun) {
+      if (yes) {
+        console.log(`  ${pc.dim('→')} Auto-confirming rebase ${pc.dim('(-y)')}`);
+      } else {
+        const confirmBranch = await clack.confirm({
+          message: `Rebase ${pc.cyan(pr.headRefName)}?`,
+          initialValue: true,
+        });
+
+        if (clack.isCancel(confirmBranch) || !confirmBranch) {
+          console.log(`  ${pc.dim('○')} Skipped`);
+          console.log('');
+          continue;
+        }
+      }
+      console.log('');
+    }
+
     const result = await rebaseBranch({
       branch: pr.headRefName,
       _prNumber: pr.number,
@@ -394,6 +434,7 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
       interactive,
       squash,
       dryRun,
+      yes,
     });
 
     console.log('');
@@ -403,6 +444,13 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
       lastBranch = pr.headRefName;
     } else {
       failed++;
+
+      if (yes) {
+        // In -y mode, exit immediately on any failure
+        console.log(`  ${pc.red('✗')} Stopping — rebase failed. Resolve conflicts and retry.`);
+        console.log('');
+        return;
+      }
 
       // If aborted due to conflicts and more branches remain, ask to continue
       if (result.aborted && i < toRebase.length - 1) {

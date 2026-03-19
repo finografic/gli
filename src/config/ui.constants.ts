@@ -11,6 +11,12 @@ export const SPINNER_SEQUENCE = ['|', '/', '-', '\\'] as const;
 export const SPINNER_INTERVAL_MS = 80;
 
 /**
+ * Hotkey that toggles between full and compact PR list views in `gli live`.
+ * Change this value here to remap the key.
+ */
+export const COMPACT_TOGGLE_KEY = 'v';
+
+/**
  * Number of characters to skip from the start of a PR title before
  * truncating. Useful when all titles share a common prefix (e.g. a
  * ticket number) that you'd rather omit from the display.

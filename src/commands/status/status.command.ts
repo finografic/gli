@@ -10,7 +10,7 @@ import { DEFAULT_PR_TITLE_SLICE_START } from '../../config/ui.constants.js';
 import { readConfig } from '../../utils/config.utils.js';
 import { assertGhAvailable } from '../../utils/gh.utils.js';
 import { printCommandHelp } from '../../utils/help.utils.js';
-import { fetchPrSections, renderDisplay } from '../live/live.command.js';
+import { fetchPrSections, renderDisplay } from '../../utils/pr-sections.utils.js';
 
 interface RunStatusCommandParams {
   argv: string[];
@@ -25,11 +25,20 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
       command: 'gli status',
       description: 'Snapshot of PR status (same as gli live, exits immediately)',
       usage: 'gli status',
-      options: [],
+      options: [
+        {
+          flag: '--compact',
+          description: 'Show compact view (hides title, shows only status icons)',
+        },
+      ],
       examples: [
         {
           command: 'gli status',
           description: 'Print PR status and exit',
+        },
+        {
+          command: 'gli status --compact',
+          description: 'Print compact PR status and exit',
         },
       ],
     });
@@ -50,6 +59,7 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
   try {
     const config = readConfig();
     const sections = await fetchPrSections();
+    const compact = argv.includes('--compact');
 
     const showTitle = config.prListing?.title?.display ?? false;
     const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
@@ -63,6 +73,8 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
       titleSliceStart,
       liveInterval,
       isLive: false,
+      compact,
+      jiraBaseUrl: config.jiraBaseUrl,
     });
 
     console.log(output);

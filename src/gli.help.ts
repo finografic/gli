@@ -38,6 +38,7 @@ export function printHelp(): void {
     { cmd: 'gli live', comment: 'Start live PR dashboard' },
     { cmd: 'gli status', comment: 'Snapshot of PR status (exits)' },
     { cmd: 'gli rebase', comment: 'Select and rebase a branch' },
+    { cmd: 'gli rebase --all -y', comment: 'Rebase all stale branches, auto-confirm each' },
     { cmd: 'gli config add', comment: 'Add current repo to config' },
     { cmd: 'gli config edit', comment: 'Edit config in $EDITOR' },
     { cmd: 'gli watch install', comment: 'Install background monitoring' },

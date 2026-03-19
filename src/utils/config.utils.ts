@@ -21,6 +21,12 @@ export interface GitCliConfig {
   checkInterval?: number;
   liveInterval?: number;
   notifyOn?: string[];
+  /**
+   * Base URL for JIRA, used to make branch-name ticket numbers clickable.
+   * Example: "https://your-org.atlassian.net/browse"
+   * Ticket is extracted from the branch name (e.g. build-SBS-1234 → SBS-1234).
+   */
+  jiraBaseUrl?: string;
   prListing?: {
     title?: {
       display?: boolean;
@@ -40,6 +46,7 @@ const FULL_DEFAULT_CONFIG: GitCliConfig = {
   checkInterval: DEFAULT_CHECK_INTERVAL,
   liveInterval: DEFAULT_LIVE_INTERVAL,
   notifyOn: ['BEHIND', 'DIRTY'],
+  // jiraBaseUrl: 'https://your-org.atlassian.net/browse',
   prListing: {
     title: {
       display: false,

@@ -112,6 +112,16 @@ export function terminalLink({ url, label }: { url: string; label: string }): st
 }
 
 /**
+ * Extract a JIRA-style ticket key from a branch name.
+ * Matches the first occurrence of PROJECT-NUMBER (e.g. SBS-1234, JIRA-42).
+ * Ignores common branch prefixes like build-, feature-, fix-, etc.
+ */
+export function getJiraTicketFromBranch({ branch }: { branch: string }): string | null {
+  const match = /([A-Z][A-Z0-9]+-\d+)/i.exec(branch);
+  return match?.[1]?.toUpperCase() ?? null;
+}
+
+/**
  * Format a single PR line for display with proper column alignment.
  */
 export function formatPrLine(
@@ -123,6 +133,8 @@ export function formatPrLine(
     titleSliceStart = 0,
     buildWidth = 0,
     commentsWidth = 0,
+    compact = false,
+    jiraBaseUrl,
   }: {
     pr: PrStatus;
     prNumWidth?: number;
@@ -132,34 +144,55 @@ export function formatPrLine(
     titleSliceStart?: number;
     buildWidth?: number;
     commentsWidth?: number;
+    /** Compact mode: hides title, shows only build icon, shows approval icon + count only. */
+    compact?: boolean;
+    /** When set, the branch column becomes a clickable JIRA link for the extracted ticket. */
+    jiraBaseUrl?: string;
   },
 ): string {
   // PR number with "PR#" prefix in magenta (clickable)
   const prNumText = `PR#${pr.number}`;
   const prNumber = terminalLink({ url: pr.url, label: pc.magenta(prNumText) });
 
-  // Branch name in cyan
-  const branch = pc.cyan(pr.headRefName);
+  // Branch name in cyan — optionally clickable JIRA link
+  const ticket = jiraBaseUrl ? getJiraTicketFromBranch({ branch: pr.headRefName }) : null;
+  const branch = ticket && jiraBaseUrl
+    ? terminalLink({ url: `${jiraBaseUrl}/${ticket}`, label: pc.cyan(pr.headRefName) })
+    : pc.cyan(pr.headRefName);
 
-  // Build status column
   const buildDisplay = getBuildStatusDisplay({ pr });
-  const buildText = `${buildDisplay.symbol} ${buildDisplay.label}`;
-  const buildStatusText = buildDisplay.color(buildText);
-
-  // Approval status column
   const approvalDisplay = getApprovalStatusDisplay({ pr });
-  const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
-  const approvalStatusText = approvalDisplay.color(approvalText);
-
   const unresolvedCommentsBadge = getUnresolvedCommentsBadge({ pr });
 
-  // Calculate padding (accounting for color codes that don't take space)
+  // Shared padding
   const prNumPadding = prNumWidth > 0 ? prNumWidth - prNumText.length : 0;
   const branchPadding = branchWidth > 0 ? branchWidth - pr.headRefName.length : 0;
-  const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
   const commentsPadding = commentsWidth > 0
     ? commentsWidth - unresolvedCommentsBadge.length
     : 0;
+  const commentsPart = commentsWidth > 0
+    ? `  ${unresolvedCommentsBadge}${' '.repeat(commentsPadding)}`
+    : '';
+
+  if (compact) {
+    // Build: icon only (no label)
+    const buildIconText = buildDisplay.color(buildDisplay.symbol);
+    // Approval: icon + approval count, no label text
+    const approvalCount = pr.latestReviews.filter((r) => r.state === 'APPROVED').length;
+    const approvalCompactText = approvalDisplay.color(
+      `${approvalDisplay.symbol} ${approvalCount}`,
+    );
+    return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${
+      ' '.repeat(branchPadding)
+    }  ${buildIconText}  ${approvalCompactText}${commentsPart}`;
+  }
+
+  // Full mode
+  const buildText = `${buildDisplay.symbol} ${buildDisplay.label}`;
+  const buildStatusText = buildDisplay.color(buildText);
+  const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
+  const approvalStatusText = approvalDisplay.color(approvalText);
+  const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
 
   // Optional title column — trim front/back whitespace, then slice from start
   let titlePart = '';
@@ -171,10 +204,6 @@ export function formatPrLine(
     });
     titlePart = `  ${pc.white(truncated)}${' '.repeat(titleWidth - truncated.length)}`;
   }
-
-  const commentsPart = commentsWidth > 0
-    ? `  ${unresolvedCommentsBadge}${' '.repeat(commentsPadding)}`
-    : '';
 
   return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${
     ' '.repeat(branchPadding)
@@ -193,6 +222,10 @@ interface FormatPrLinesParams {
   branchWidth?: number;
   buildWidth?: number;
   commentsWidth?: number;
+  /** Compact mode: hides title, shows only build icon, shows approval icon + count only. */
+  compact?: boolean;
+  /** When set, branch names become clickable JIRA ticket links. */
+  jiraBaseUrl?: string;
 }
 
 /**
@@ -209,6 +242,8 @@ export function formatPrLines(
     branchWidth: branchWidthOverride,
     buildWidth: buildWidthOverride,
     commentsWidth: commentsWidthOverride,
+    compact = false,
+    jiraBaseUrl,
   }: FormatPrLinesParams,
 ): string[] {
   if (prs.length === 0) return [];
@@ -218,16 +253,20 @@ export function formatPrLines(
     ?? Math.max(...prs.map((pr) => `PR#${pr.number}`.length));
   const branchWidth = branchWidthOverride
     ?? Math.max(...prs.map((pr) => pr.headRefName.length));
-  const titleWidth = showTitle
+  // Compact mode never shows title; full mode respects showTitle
+  const titleWidth = !compact && showTitle
     ? Math.min(titleMaxChars, Math.max(...prs.map((pr) => pr.title.length)))
     : 0;
-  const buildWidth = buildWidthOverride
-    ?? Math.max(
-      ...prs.map((pr) => {
-        const d = getBuildStatusDisplay({ pr });
-        return `${d.symbol} ${d.label}`.length;
-      }),
-    );
+  // Compact mode omits build label padding — icon widths vary and no label to align
+  const buildWidth = compact
+    ? 0
+    : (buildWidthOverride
+      ?? Math.max(
+        ...prs.map((pr) => {
+          const d = getBuildStatusDisplay({ pr });
+          return `${d.symbol} ${d.label}`.length;
+        }),
+      ));
 
   const commentsWidth = commentsWidthOverride
     ?? Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length));
@@ -241,6 +280,8 @@ export function formatPrLines(
       titleSliceStart,
       buildWidth,
       commentsWidth,
+      compact,
+      jiraBaseUrl,
     })
   );
 }

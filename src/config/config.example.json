@@ -8,6 +8,7 @@
   "checkInterval": 60,
   "liveInterval": 60,
   "notifyOn": ["BEHIND", "DIRTY"],
+  "jiraBaseUrl": "https://your-org.atlassian.net/browse",
   "prListing": {
     "title": {
       "display": true,
