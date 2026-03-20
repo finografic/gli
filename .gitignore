@@ -10,8 +10,6 @@ build/
 .env
 .env.local
 .env.*.local
-token.txt
-token-*.txt
 
 # IDE
 .cursor/chats
