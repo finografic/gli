@@ -8,7 +8,6 @@
 
 ## Project-Specific
 
-- Do not include `Co-Authored-By` lines in commit messages.
 - When adding a command, update the `commands` array in `src/gli.help.ts` and add a matching entry to the `EXAMPLES` section.
 
 ## Session Memory

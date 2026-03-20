@@ -13,16 +13,12 @@ build/
 
 # IDE
 .cursor/chats
+.cursor/hooks/
 .claude/
 !.claude/settings.json
 .idea/
 *.swp
 *.swo
-
-# OS
-.DS_Store
-Thumbs.db
-Icon?
 
 # Logs
 *.log
@@ -41,3 +37,8 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+Icon?
