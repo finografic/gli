@@ -1,7 +1,7 @@
 {
   "name": "@finografic/git-cli",
   "type": "module",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "description": "Git utilities to be run from the command line.",
   "homepage": "https://github.com/finografic/git-cli",
   "repository": {
@@ -112,7 +112,9 @@
     ]
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged --allow-empty"
