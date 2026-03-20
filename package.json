@@ -1,7 +1,7 @@
 {
   "name": "@finografic/git-cli",
   "type": "module",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Git utilities to be run from the command line.",
   "homepage": "https://github.com/finografic/git-cli",
   "repository": {
