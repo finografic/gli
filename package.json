@@ -41,8 +41,9 @@
     "gli": "./dist/cli.mjs"
   },
   "scripts": {
-    "·········· DEV+BUILD": "·················································",
+    "·········· DEV_AND_BUILD": "·············································",
     "dev": "tsdown --watch",
+    "dev.cli": "NODE_ENV=development tsx src/cli.ts --",
     "link": "pnpm build && pnpm link --global",
     "unlink": "pnpm unlink --global",
     "build": "tsdown",
@@ -72,8 +73,7 @@
     "tsc.debug": "tsc --pretty --project tsconfig.json",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "prepack": "pnpm build",
-    "prepare": "simple-git-hooks",
-    "dev.cli": "NODE_ENV=development tsx src/cli.ts --"
+    "prepare": "simple-git-hooks"
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1",
