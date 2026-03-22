@@ -55,8 +55,8 @@
     "lint": "eslint .",
     "lint.fix": "eslint . --fix",
     "·········· FORMATTING": "················································",
-    "format": "dprint fmt --diff",
     "format.check": "dprint check",
+    "format.fix": "dprint fmt --diff",
     "·········· PUBLISH.GITHUB": "············································",
     "release.github.patch": "pnpm run release.check && pnpm version patch && git push --follow-tags",
     "release.github.minor": "pnpm run release.check && pnpm version minor && git push --follow-tags",
@@ -107,7 +107,11 @@
       "dprint fmt --allow-no-files",
       "eslint --fix"
     ],
-    "*.{json,jsonc,md,yml,yaml,toml}": [
+    "*.md": [
+      "dprint fmt --allow-no-files",
+      "eslint --fix"
+    ],
+    "*.{json,jsonc,yml,yaml,toml}": [
       "dprint fmt --allow-no-files"
     ]
   },
