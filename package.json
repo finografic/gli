@@ -70,6 +70,7 @@
     "update.dprint-config": "pnpm update @finografic/dprint-config --latest",
     "upgrade.deps.all": "pnpm update --latest",
     "·········· UTILS": "·····················································",
+    "deprecate.git-cli": "tsx scripts/deprecate-git-cli.ts",
     "tsc.debug": "tsc --pretty --project tsconfig.json",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "prepack": "pnpm build",
@@ -77,8 +78,10 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1",
+    "execa": "^9.6.1",
     "log-update": "^7.1.0",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
