@@ -1,6 +1,6 @@
-# 🦋 @finografic/gli
+# 💻 @finografic/gli
 
-Git utilities for monitoring and managing PRs from the terminal. Built on the GitHub CLI (`gh`).
+> Git utilities for monitoring and managing PRs from the terminal. Built on the GitHub CLI (`gh`).
 
 ## Installation
 
@@ -58,6 +58,7 @@ Interactively rebase branches that are behind the default branch. Combines the b
 ```bash
 gli rebase                  # Select a branch to rebase
 gli rebase --all            # Rebase all stale branches (step-through)
+gli rebase --all -y         # Rebase all, auto-accept prompts
 gli rebase -i               # Interactive rebase (manual pick/squash/edit)
 gli rebase -s               # Auto-squash multiple commits into one
 gli rebase --all --stay     # Rebase all, stay on last branch
@@ -73,6 +74,7 @@ gli rebase --dry-run        # Preview without executing
 - Interactive mode (`-i`) for manual commit editing
 - Auto-squash (`-s`) for cleaning up commit history
 - Returns to original branch (unless `--stay` flag)
+- Yes-mode (`-y`) — auto-accepts rebase and force-push prompts
 
 ### `gli select`
 

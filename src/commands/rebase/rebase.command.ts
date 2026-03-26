@@ -5,6 +5,8 @@ import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 
 import { readConfig } from '../../utils/config.utils.js';
+import type { FlowContext } from '../../utils/flow.utils.js';
+import { createFlowContext, promptConfirm } from '../../utils/flow.utils.js';
 import type { PrStatus } from '../../utils/gh.utils.js';
 import { assertGhAvailable, fetchDefaultBranch } from '../../utils/gh.utils.js';
 import { printCommandHelp } from '../../utils/help.utils.js';
@@ -22,7 +24,7 @@ interface RebaseBranchParams {
   interactive: boolean;
   squash: boolean;
   dryRun: boolean;
-  yes: boolean;
+  flow: FlowContext;
 }
 
 interface RebaseBranchResult {
@@ -67,7 +69,7 @@ const rebaseBranch = async ({
   interactive,
   squash,
   dryRun,
-  yes,
+  flow,
 }: RebaseBranchParams): Promise<RebaseBranchResult> => {
   if (dryRun) {
     const mode = squash ? 'squash and rebase' : interactive ? 'interactively rebase' : 'rebase';
@@ -161,18 +163,14 @@ const rebaseBranch = async ({
   }
 
   // Force-push confirmation
-  if (yes) {
-    console.log(`  ${pc.dim('→')} Auto-pushing with --force-with-lease ${pc.dim('(-y)')}`);
-  } else {
-    const shouldPush = await clack.confirm({
-      message: `Force-push ${pc.cyan(branch)} to origin?`,
-      initialValue: false,
-    });
-
-    if (clack.isCancel(shouldPush) || !shouldPush) {
-      console.log(`  ${pc.dim('○')} Skipped push`);
-      return { success: true, aborted: false };
-    }
+  const shouldPush = await promptConfirm(flow, {
+    message: `Force-push ${pc.cyan(branch)} to origin?`,
+    default: true,
+    skipMessage: `  ${pc.dim('→')} Auto-pushing with --force-with-lease ${pc.dim('(-y)')}`,
+  });
+  if (!shouldPush) {
+    console.log(`  ${pc.dim('○')} Skipped push`);
+    return { success: true, aborted: false };
   }
 
   // Push with --force-with-lease
@@ -193,12 +191,15 @@ const rebaseBranch = async ({
 };
 
 export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
-  const dryRun = argv.includes('--dry-run');
-  const all = argv.includes('--all');
-  const interactive = argv.includes('-i') || argv.includes('--interactive');
-  const squash = argv.includes('-s') || argv.includes('--squash');
-  const stay = argv.includes('--stay');
-  const yes = argv.includes('-y');
+  const flow = createFlowContext(argv, {
+    dryRun: { alias: 'dry-run', type: 'boolean' },
+    all: { type: 'boolean' },
+    interactive: { alias: 'i', type: 'boolean' },
+    squash: { alias: 's', type: 'boolean' },
+    stay: { type: 'boolean' },
+    y: { type: 'boolean' },
+  });
+  const { dryRun, all, interactive, squash, stay } = flow.flags;
 
   if (argv.includes('--help') || argv.includes('-h')) {
     printCommandHelp({
@@ -347,14 +348,15 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
   let toRebase: PrStatus[];
 
   if (all) {
-    const confirm = await clack.confirm({
+    const confirmed = await promptConfirm(flow, {
       message: `Rebase all ${stalePrs.length} branch${
         stalePrs.length === 1 ? '' : 'es'
       } onto origin/${defaultBranch}?`,
-      initialValue: false,
+      default: false,
+      required: true,
     });
 
-    if (clack.isCancel(confirm) || !confirm) {
+    if (!confirmed) {
       console.log(`  ${pc.dim('Cancelled')}`);
       console.log('');
       return;
@@ -410,19 +412,15 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
 
     // Per-branch confirm (only in --all mode; auto-accepted with -y)
     if (all && !dryRun) {
-      if (yes) {
-        console.log(`  ${pc.dim('→')} Auto-confirming rebase ${pc.dim('(-y)')}`);
-      } else {
-        const confirmBranch = await clack.confirm({
-          message: `Rebase ${pc.cyan(pr.headRefName)}?`,
-          initialValue: true,
-        });
-
-        if (clack.isCancel(confirmBranch) || !confirmBranch) {
-          console.log(`  ${pc.dim('○')} Skipped`);
-          console.log('');
-          continue;
-        }
+      const confirmBranch = await promptConfirm(flow, {
+        message: `Rebase ${pc.cyan(pr.headRefName)}?`,
+        default: true,
+        skipMessage: `  ${pc.dim('→')} Auto-confirming rebase ${pc.dim('(-y)')}`,
+      });
+      if (!confirmBranch) {
+        console.log(`  ${pc.dim('○')} Skipped`);
+        console.log('');
+        continue;
       }
       console.log('');
     }
@@ -434,7 +432,7 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
       interactive,
       squash,
       dryRun,
-      yes,
+      flow,
     });
 
     console.log('');
@@ -445,7 +443,7 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
     } else {
       failed++;
 
-      if (yes) {
+      if (flow.yesMode) {
         // In -y mode, exit immediately on any failure
         console.log(`  ${pc.red('✗')} Stopping — rebase failed. Resolve conflicts and retry.`);
         console.log('');
@@ -454,12 +452,13 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
 
       // If aborted due to conflicts and more branches remain, ask to continue
       if (result.aborted && i < toRebase.length - 1) {
-        const shouldContinue = await clack.confirm({
+        const shouldContinue = await promptConfirm(flow, {
           message: 'Continue to next branch?',
-          initialValue: false,
+          default: false,
+          required: true,
         });
 
-        if (clack.isCancel(shouldContinue) || !shouldContinue) {
+        if (!shouldContinue) {
           console.log(`  ${pc.dim('Stopped. Staying on')} ${pc.cyan(pr.headRefName)}`);
           console.log('');
           return;
