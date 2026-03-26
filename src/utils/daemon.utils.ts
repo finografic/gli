@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const PLIST_FILENAME = 'com.finografic.git-cli.pr-watch.plist';
+const PLIST_FILENAME = 'com.finografic.gli.pr-watch.plist';
 
 /**
  * Get the LaunchAgents directory path.
@@ -32,7 +32,7 @@ export function isDaemonInstalled(): boolean {
 export function isDaemonRunning(): boolean {
   try {
     const result = execSync('launchctl list', { encoding: 'utf-8' });
-    return result.includes('com.finografic.git-cli.pr-watch');
+    return result.includes('com.finografic.gli.pr-watch');
   } catch {
     return false;
   }
@@ -42,7 +42,7 @@ export function isDaemonRunning(): boolean {
  * Get log file path.
  */
 export function getLogFilePath(): string {
-  return join(homedir(), '.config', 'git-cli', 'logs', 'watch.log');
+  return join(homedir(), '.config', 'gli', 'logs', 'watch.log');
 }
 
 /**

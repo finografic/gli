@@ -23,6 +23,6 @@ export const COMPACT_TOGGLE_KEY = {
  * Number of characters to skip from the start of a PR title before
  * truncating. Useful when all titles share a common prefix (e.g. a
  * ticket number) that you'd rather omit from the display.
- * Writable to ~/.config/git-cli/config.json via prListing.title.sliceStart.
+ * Writable to ~/.config/gli/config.json via prListing.title.sliceStart.
  */
 export const DEFAULT_PR_TITLE_SLICE_START = 0;

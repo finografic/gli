@@ -62,20 +62,20 @@ When you run a release command:
    - Creates GitHub Release with auto-generated notes
 
 5. **GitHub Release appears**
-   - View at: `https://github.com/finografic/git-cli/releases`
+   - View at: `https://github.com/finografic/gli/releases`
 
 ## Verification
 
 After releasing, verify:
 
 1. **GitHub Release created**
-   - `https://github.com/finografic/git-cli/releases`
+   - `https://github.com/finografic/gli/releases`
 
 2. **Package published**
-   - `https://github.com/finografic/git-cli/packages`
+   - `https://github.com/finografic/gli/packages`
 
 3. **Workflow succeeded**
-   - `https://github.com/finografic/git-cli/actions`
+   - `https://github.com/finografic/gli/actions`
 
 ## Manual Steps
 

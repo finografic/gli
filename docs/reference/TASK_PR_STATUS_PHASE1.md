@@ -2,7 +2,7 @@
 
 ## Context
 
-This is a new command for `@finografic/git-cli` (base CLI command: `gli`). It displays the merge status of open PRs in the current repository, highlighting branches that need rebasing. The user invokes it as `gli status`.
+This is a new command for `@finografic/gli` (base CLI command: `gli`). It displays the merge status of open PRs in the current repository, highlighting branches that need rebasing. The user invokes it as `gli status`.
 
 Before making any changes, explore the existing codebase to understand:
 

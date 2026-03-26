@@ -13,7 +13,7 @@ gli watch check        # Run a one-off check (used by the agent)
 
 ## How It Works
 
-1. `gli watch install` generates a macOS LaunchAgent plist at `~/Library/LaunchAgents/com.finografic.git-cli.pr-watch.plist`
+1. `gli watch install` generates a macOS LaunchAgent plist at `~/Library/LaunchAgents/com.finografic.gli.pr-watch.plist`
 2. The agent runs `gli watch check` at a configurable interval (default: 900s / 15 minutes)
 3. Each check iterates all repos from `gli config`, fetches open PRs, and identifies stale ones
 4. If any PRs are `BEHIND` or `DIRTY`, a macOS notification is sent
@@ -27,7 +27,7 @@ gli watch check        # Run a one-off check (used by the agent)
 
 ## Configuration
 
-The check interval and notification triggers are configured in `~/.config/git-cli/config.json`:
+The check interval and notification triggers are configured in `~/.config/gli/config.json`:
 
 ```json
 {
@@ -42,7 +42,7 @@ The check interval and notification triggers are configured in `~/.config/git-cl
 
 ## Logging
 
-Check results are logged to `~/.config/git-cli/logs/watch.log` for debugging.
+Check results are logged to `~/.config/gli/logs/watch.log` for debugging.
 
 ## Prerequisites
 

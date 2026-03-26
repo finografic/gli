@@ -2,7 +2,7 @@
 
 ## Overview
 
-A set of commands for `@finografic/git-cli` that monitor PR status across repositories, detect branches that need rebasing, and provide an interactive terminal-native workflow for resolving them.
+A set of commands for `@finografic/gli` that monitor PR status across repositories, detect branches that need rebasing, and provide an interactive terminal-native workflow for resolving them.
 
 Built on top of `gh` CLI's JSON output, specifically the `mergeStateStatus` field from GitHub's GraphQL API.
 
@@ -50,7 +50,7 @@ Note: `DRAFT` is deprecated — use the `isDraft` field separately.
 
 **Tasks**:
 
-- [ ] Design config file structure at `~/.config/git-cli/config.json`
+- [ ] Design config file structure at `~/.config/gli/config.json`
 - [ ] Config schema:
 
   ```json
@@ -66,7 +66,7 @@ Note: `DRAFT` is deprecated — use the `isDraft` field separately.
   }
   ```
 
-- [ ] Add `config` command or subcommands (`git-cli config add-repo`, `git-cli config list`, `git-cli config remove-repo`)
+- [ ] Add `config` command or subcommands (`gli config add-repo`, `gli config list`, `gli config remove-repo`)
 - [ ] Update `pr-status` to accept `--all` flag that iterates all configured repos
 - [ ] Aggregated output: group results by repo, show summary counts
 - [ ] Use `gh pr list --repo owner/repo` for remote checks (no need to `cd` into each repo)
@@ -110,7 +110,7 @@ Note: `DRAFT` is deprecated — use the `isDraft` field separately.
   - Detect user's terminal app (Terminal.app, iTerm2, Warp, etc.)
   - Fallback to `open -a Terminal` if detection fails
 - [ ] `gli watch install` subcommand:
-  - Generates `~/Library/LaunchAgents/com.finografic.git-cli.pr-watch.plist`
+  - Generates `~/Library/LaunchAgents/com.finografic.gli.pr-watch.plist`
   - Configures interval from `config.json` `checkInterval` (default 900s = 15 min)
   - Runs `launchctl load` to activate
 - [ ] `gli watch uninstall` subcommand:
@@ -124,7 +124,7 @@ Note: `DRAFT` is deprecated — use the `isDraft` field separately.
   - If any are `BEHIND` or `DIRTY`, fires notification
   - Notification title: `"PR needs rebase"` / body: `"<repo>: #<number> <title>"`
   - Batches multiple stale PRs into a summary notification
-- [ ] Logging: write check results to `~/.config/git-cli/logs/` for debugging
+- [ ] Logging: write check results to `~/.config/gli/logs/` for debugging
 - [ ] `osascript` fallback if `terminal-notifier` is not installed (non-clickable but functional)
 
 **Depends on**: Phase 2 (multi-repo config), Phase 3 (rebase command for the click action).
@@ -145,6 +145,6 @@ Note: `DRAFT` is deprecated — use the `isDraft` field separately.
 ## Architecture Notes
 
 - All `gh` interactions should be wrapped in a utility module (e.g., `src/utils/gh.utils.ts` or `src/lib/gh/`) so the gh CLI calls are centralised and testable
-- The config file path (`~/.config/git-cli/config.json`) should be a constant, possibly respecting `XDG_CONFIG_HOME`
+- The config file path (`~/.config/gli/config.json`) should be a constant, possibly respecting `XDG_CONFIG_HOME`
 - Each phase builds on the previous but each command is independently useful
 - Error handling for missing `gh` CLI should be clear and early (check on command entry)

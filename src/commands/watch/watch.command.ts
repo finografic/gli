@@ -18,7 +18,7 @@ interface RunWatchCommandParams {
   argv: string[];
 }
 
-const PLIST_LABEL = 'com.finografic.git-cli.pr-watch';
+const PLIST_LABEL = 'com.finografic.gli.pr-watch';
 const PLIST_DIR = join(homedir(), 'Library', 'LaunchAgents');
 const PLIST_PATH = join(PLIST_DIR, `${PLIST_LABEL}.plist`);
 
@@ -28,10 +28,10 @@ const resolveCliBin = (): string => {
   } catch {
     // Fallback: try to find via npm/pnpm global
     try {
-      return execSync('which git-cli', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+      return execSync('which gli', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
         .trim();
     } catch {
-      throw new Error('Could not find `gli` or `git-cli` on PATH. Run `pnpm link --global` first.');
+      throw new Error('Could not find `gli` on PATH. Run `pnpm link --global` first.');
     }
   }
 };
@@ -126,7 +126,7 @@ const printHelp = () => {
       "LaunchAgent runs 'gli watch check' periodically (default: every 60s)",
       'Checks all configured repos for PRs in states: BEHIND, DIRTY, BLOCKED, UNSTABLE',
       'Sends native macOS notifications showing repo, branch, and status',
-      'Logs activity to ~/.config/git-cli/logs/watch.log',
+      'Logs activity to ~/.config/gli/logs/watch.log',
       'Configure interval via config.checkInterval in config file',
       "See notification → Run 'gli live' for interactive dashboard",
     ],

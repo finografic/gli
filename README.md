@@ -1,11 +1,11 @@
-# 🦋 @finografic/git-cli
+# 🦋 @finografic/gli
 
 Git utilities for monitoring and managing PRs from the terminal. Built on the GitHub CLI (`gh`).
 
 ## Installation
 
 ```bash
-pnpm add -g @finografic/git-cli
+pnpm add -g @finografic/gli
 ```
 
 Or clone and link locally:
@@ -84,7 +84,7 @@ gli select
 
 ### `gli config`
 
-Manage the multi-repo configuration stored at `~/.config/git-cli/config.json`.
+Manage the multi-repo configuration stored at `~/.config/gli/config.json`.
 
 On first run, the config file is written with **all default values** so every option is visible and editable.
 

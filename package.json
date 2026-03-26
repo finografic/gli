@@ -1,15 +1,15 @@
 {
-  "name": "@finografic/git-cli",
+  "name": "@finografic/gli",
   "type": "module",
   "version": "1.11.0",
-  "description": "Git utilities to be run from the command line.",
-  "homepage": "https://github.com/finografic/git-cli",
+  "description": "GLI - git CLI utilities for terminal ease.",
+  "homepage": "https://github.com/finografic/gli",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/finografic/git-cli.git"
+    "url": "git+https://github.com/finografic/gli.git"
   },
   "bugs": {
-    "url": "https://github.com/finografic/git-cli/issues"
+    "url": "https://github.com/finografic/gli/issues"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -22,7 +22,7 @@
   "license": "MIT",
   "keywords": [
     "finografic",
-    "git-cli",
+    "gli",
     "genx:type:cli",
     "cli"
   ],
@@ -64,7 +64,7 @@
     "release.check": "pnpm format.check && pnpm lint.fix && pnpm typecheck && pnpm test.run",
     "release.publish": "pnpm publish --registry https://npm.pkg.github.com",
     "·········· REGISTRIES": "················································",
-    "view.registry.github": "pnpm view @finografic/git-cli --registry=https://npm.pkg.github.com",
+    "view.registry.github": "pnpm view @finografic/gli --registry=https://npm.pkg.github.com",
     "·········· PACKAGES": "··················································",
     "update.eslint-config": "pnpm update @finografic/eslint-config --latest",
     "update.dprint-config": "pnpm update @finografic/dprint-config --latest",
@@ -121,6 +121,6 @@
     ]
   },
   "simple-git-hooks": {
-    "pre-commit": "npx lint-staged --allow-empty && dprint check && pnpm exec eslint \"**/*.md\""
+    "pre-commit": "npx lint-staged --allow-empty && dprint check && pnpm exec eslint \"**/*.md\" && pnpm typecheck"
   }
 }

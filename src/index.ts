@@ -1,3 +1,3 @@
 export const hello = () => {
-  return 'Hello from @finografic/git-cli!';
+  return 'Hello from @finografic/gli!';
 };

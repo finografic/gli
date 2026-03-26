@@ -124,7 +124,7 @@ export function renderDisplay({
   if (isLive) {
     lines.push(
       pc.dim(
-        `  Refreshing every ${liveInterval}s · [${COMPACT_TOGGLE_KEY}] toggle compact · Ctrl+C to exit`,
+        `  Refreshing every ${liveInterval}s · [${COMPACT_TOGGLE_KEY.label}] toggle compact · Ctrl+C to exit`,
       ),
     );
   }

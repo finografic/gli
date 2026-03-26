@@ -4,7 +4,7 @@
 
 ## Rules - Claude
 
-- Do not include `Co-Authored-By` lines in commit messages.
+- IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages.
 
 ## Project-Specific
 

@@ -58,7 +58,7 @@ const FULL_DEFAULT_CONFIG: GitCliConfig = {
 
 export const CONFIG_DIR = join(
   process.env['XDG_CONFIG_HOME'] || join(homedir(), '.config'),
-  'git-cli',
+  'gli',
 );
 
 export const CONFIG_PATH = join(CONFIG_DIR, 'config.json');

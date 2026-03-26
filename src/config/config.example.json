@@ -1,8 +1,8 @@
 {
   "repos": [
     {
-      "localPath": "/Users/justin/@finografic-git-cli",
-      "remote": "https://github.com/finografic/git-cli"
+      "localPath": "/Users/justin/@finografic-gli",
+      "remote": "https://github.com/finografic/gli"
     }
   ],
   "checkInterval": 60,
