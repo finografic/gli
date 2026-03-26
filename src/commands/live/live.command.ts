@@ -106,7 +106,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
       options: [
         {
           flag: '--compact',
-          description: `Start in compact view (toggle anytime with [${COMPACT_TOGGLE_KEY}])`,
+          description: `Start in compact view (toggle anytime with [${COMPACT_TOGGLE_KEY.label}])`,
         },
       ],
       examples: [
@@ -160,7 +160,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
     process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.on('data', (key: string) => {
-      if (key === COMPACT_TOGGLE_KEY) {
+      if (key === COMPACT_TOGGLE_KEY.binding) {
         isCompact = !isCompact;
         renderFromCache();
       } else if (key === '\x03' || key === 'q') {

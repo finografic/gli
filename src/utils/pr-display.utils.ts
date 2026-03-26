@@ -175,16 +175,14 @@ export function formatPrLine(
     : '';
 
   if (compact) {
-    // Build: icon only (no label)
-    const buildIconText = buildDisplay.color(buildDisplay.symbol);
-    // Approval: icon + approval count, no label text
-    const approvalCount = pr.latestReviews.filter((r) => r.state === 'APPROVED').length;
-    const approvalCompactText = approvalDisplay.color(
-      `${approvalDisplay.symbol} ${approvalCount}`,
-    );
+    const buildText = `${buildDisplay.symbol} ${buildDisplay.label}`;
+    const buildStatusText = buildDisplay.color(buildText);
+    const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
+    const approvalStatusText = approvalDisplay.color(approvalText);
+    const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
     return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${
       ' '.repeat(branchPadding)
-    }  ${buildIconText}  ${approvalCompactText}${commentsPart}`;
+    }  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${commentsPart}`;
   }
 
   // Full mode
@@ -257,16 +255,13 @@ export function formatPrLines(
   const titleWidth = !compact && showTitle
     ? Math.min(titleMaxChars, Math.max(...prs.map((pr) => pr.title.length)))
     : 0;
-  // Compact mode omits build label padding — icon widths vary and no label to align
-  const buildWidth = compact
-    ? 0
-    : (buildWidthOverride
-      ?? Math.max(
-        ...prs.map((pr) => {
-          const d = getBuildStatusDisplay({ pr });
-          return `${d.symbol} ${d.label}`.length;
-        }),
-      ));
+  const buildWidth = buildWidthOverride
+    ?? Math.max(
+      ...prs.map((pr) => {
+        const d = getBuildStatusDisplay({ pr });
+        return `${d.symbol} ${d.label}`.length;
+      }),
+    );
 
   const commentsWidth = commentsWidthOverride
     ?? Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length));

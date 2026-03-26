@@ -14,7 +14,10 @@ export const SPINNER_INTERVAL_MS = 80;
  * Hotkey that toggles between full and compact PR list views in `gli live`.
  * Change this value here to remap the key.
  */
-export const COMPACT_TOGGLE_KEY = 'v';
+export const COMPACT_TOGGLE_KEY = {
+  label: 'space',
+  binding: ' ',
+};
 
 /**
  * Number of characters to skip from the start of a PR title before
