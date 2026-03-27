@@ -192,14 +192,19 @@ const rebaseBranch = async ({
 
 export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
   const flow = createFlowContext(argv, {
-    dryRun: { alias: 'dry-run', type: 'boolean' },
+    'dry-run': { type: 'boolean' },
     all: { type: 'boolean' },
     interactive: { alias: 'i', type: 'boolean' },
     squash: { alias: 's', type: 'boolean' },
     stay: { type: 'boolean' },
     y: { type: 'boolean' },
   });
-  const { dryRun, all, interactive, squash, stay } = flow.flags;
+
+  const dryRun = Boolean(flow.flags['dry-run']);
+  const all = Boolean(flow.flags['all']);
+  const interactive = Boolean(flow.flags['interactive']);
+  const squash = Boolean(flow.flags['squash']);
+  const stay = Boolean(flow.flags['stay']);
 
   if (argv.includes('--help') || argv.includes('-h')) {
     printCommandHelp({
@@ -355,7 +360,6 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
       default: false,
       required: true,
     });
-
     if (!confirmed) {
       console.log(`  ${pc.dim('Cancelled')}`);
       console.log('');
@@ -457,13 +461,11 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
           default: false,
           required: true,
         });
-
         if (!shouldContinue) {
           console.log(`  ${pc.dim('Stopped. Staying on')} ${pc.cyan(pr.headRefName)}`);
           console.log('');
           return;
         }
-
         console.log('');
       }
     }

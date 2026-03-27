@@ -41,7 +41,7 @@
     "gli": "./dist/cli.mjs"
   },
   "scripts": {
-    "·········· DEV_AND_BUILD": "·············································",
+    "---------- DEV_AND_BUILD": "---------------------------------------------",
     "dev": "tsdown --watch",
     "dev.cli": "NODE_ENV=development tsx src/cli.ts --",
     "link": "pnpm build && pnpm link --global",
