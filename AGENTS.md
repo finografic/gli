@@ -4,7 +4,7 @@ Rules are canonical in `.github/instructions/` and shared across Claude Code, Cu
 
 ## Rules - General
 
-- IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages.
+- IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages. Not ever, not for any reason.
 
 ## Rules - Markdown Tables
 

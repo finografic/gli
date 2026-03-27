@@ -5,7 +5,6 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.spec.ts'],
     exclude: ['node_modules', 'dist'],
-    /** Exit successfully when no files match `include` (e.g. no `*.spec.ts` yet). */
     passWithNoTests: true,
     coverage: {
       provider: 'v8',
