@@ -107,12 +107,12 @@
   "packageManager": "pnpm@10.32.1",
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
-      "dprint fmt --allow-no-files",
-      "eslint --fix"
+      "eslint --fix",
+      "dprint fmt --allow-no-files"
     ],
     "*.md": [
-      "dprint fmt --allow-no-files",
-      "eslint --fix"
+      "eslint --fix",
+      "dprint fmt --allow-no-files"
     ],
     "*.{json,jsonc,yml,yaml,toml}": [
       "dprint fmt --allow-no-files"
@@ -124,6 +124,6 @@
     ]
   },
   "simple-git-hooks": {
-    "pre-commit": "npx lint-staged --allow-empty && dprint check && pnpm exec eslint \"**/*.md\" && pnpm typecheck"
+    "pre-commit": "npx lint-staged --allow-empty && dprint check && pnpm typecheck"
   }
 }
