@@ -1,7 +1,7 @@
 {
   "name": "@finografic/gli",
   "type": "module",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "GLI - git CLI utilities for terminal ease.",
   "homepage": "https://github.com/finografic/gli",
   "repository": {
