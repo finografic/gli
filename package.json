@@ -26,15 +26,14 @@
     "genx:type:cli",
     "cli"
   ],
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "module": "./dist/index.mjs",
+  "main": "./dist/cli.mjs",
+  "types": "./dist/cli.d.mts",
+  "module": "./dist/cli.mjs",
   "files": [
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.mjs",
-    "./cli": "./dist/cli.mjs",
+    ".": "./dist/cli.mjs",
     "./package.json": "./package.json"
   },
   "bin": {

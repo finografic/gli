@@ -11,9 +11,22 @@ import { DEFAULT_PR_TITLE_SLICE_START } from '../config/ui.constants.js';
 import type { RepoSection } from './gh.utils.js';
 
 export interface JiraConfig {
+  /**
+   * Jira browse base (no trailing slash). Empty string disables branch → Jira links.
+   * Example: `https://your-org.atlassian.net/browse`
+   */
   baseUrl: string;
-  /** When set, only branches containing this prefix will get Jira links (e.g. "SBS"). */
+  /**
+   * When non-empty, only branches containing this prefix get Jira links (e.g. `SBS`).
+   * Empty string uses the default PROJECT-NUMBER pattern.
+   */
   issuePrefix?: string;
+}
+
+/** True when `jira.baseUrl` is set to a non-empty value (after trim). */
+export function isJiraLinksEnabled(jira?: JiraConfig | null): boolean {
+  const url = jira?.baseUrl;
+  return typeof url === 'string' && url.trim().length > 0;
 }
 
 export interface RepoConfig {
@@ -47,6 +60,10 @@ export interface GitCliConfig {
 const FULL_DEFAULT_CONFIG: GitCliConfig = {
   repos: [],
   liveInterval: DEFAULT_LIVE_INTERVAL,
+  jira: {
+    baseUrl: '',
+    issuePrefix: '',
+  },
   prListing: {
     title: {
       display: false,
@@ -120,18 +137,7 @@ export const readConfig = (): GitCliConfig => {
       return { ...FULL_DEFAULT_CONFIG };
     }
 
-    const parsedRecord = parsed as Record<string, unknown>;
-    const config = parsed as GitCliConfig;
-    const legacyJiraBaseUrl = parsedRecord['jiraBaseUrl'];
-
-    if (!config.jira && typeof legacyJiraBaseUrl === 'string' && legacyJiraBaseUrl.length > 0) {
-      return {
-        ...config,
-        jira: { baseUrl: legacyJiraBaseUrl },
-      };
-    }
-
-    return config;
+    return parsed as GitCliConfig;
   } catch {
     return { ...FULL_DEFAULT_CONFIG };
   }

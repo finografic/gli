@@ -37,7 +37,6 @@ export function renderDisplay({
 }: RenderDisplayParams): string {
   const lines: string[] = [];
 
-  // Header with 24h time (no timezone)
   const now = new Date();
   lines.push('');
   lines.push(
@@ -54,6 +53,7 @@ export function renderDisplay({
       )
     }${compact ? `  ${pc.dim('[compact]')}` : ''}`,
   );
+
   lines.push('');
 
   // One section per repo — skip repos with no PRs and no error
@@ -76,7 +76,6 @@ export function renderDisplay({
         label: pc.bold(pc.white(repoInfo.nameWithOwner)),
       });
       lines.push(`  ${repoLink}`);
-      // lines.push('');
     }
 
     if (error) {
@@ -99,8 +98,6 @@ export function renderDisplay({
     lines.push('');
   }
 
-  // Metadata Footer
-  // Config footer
   lines.push(
     `  ${pc.dim(tildeify(getConfigFilePath()))}`,
   );
@@ -162,5 +159,7 @@ export async function fetchPrSections(): Promise<RepoSection[]> {
     // Not critical
   }
   const allPrs = await fetchMyOpenPrs();
-  return [{ repoInfo, pullRequests: allPrs.filter((pr) => !pr.isDraft) }];
+  const pullRequests = allPrs.filter((pr) => !pr.isDraft);
+
+  return [{ repoInfo, pullRequests }];
 }

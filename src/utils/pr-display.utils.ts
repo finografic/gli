@@ -1,5 +1,6 @@
 import pc from 'picocolors';
 
+import { isJiraLinksEnabled } from './config.utils.js';
 import type { PrStatus } from './gh.utils.js';
 
 interface StatusDisplay {
@@ -159,12 +160,19 @@ export function formatPrLine(
   const prNumText = `PR#${pr.number}`;
   const prNumber = terminalLink({ url: pr.url, label: pc.magenta(prNumText) });
 
-  // Branch name in cyan — optionally clickable JIRA link
-  const ticket = jiraConfig
-    ? getJiraTicketFromBranch({ branch: pr.headRefName, issuePrefix: jiraConfig.issuePrefix })
+  // Branch name in cyan — optionally clickable JIRA link (disabled when baseUrl is empty)
+  const jiraForBranchLink = jiraConfig && isJiraLinksEnabled(jiraConfig) ? jiraConfig : undefined;
+  const ticket = jiraForBranchLink
+    ? getJiraTicketFromBranch({
+      branch: pr.headRefName,
+      issuePrefix: jiraForBranchLink.issuePrefix,
+    })
     : null;
-  const branch = ticket && jiraConfig
-    ? terminalLink({ url: `${jiraConfig.baseUrl}/${ticket}`, label: pc.cyan(pr.headRefName) })
+  const branch = ticket && jiraForBranchLink
+    ? terminalLink({
+      url: `${jiraForBranchLink.baseUrl.replace(/\/$/, '')}/${ticket}`,
+      label: pc.cyan(pr.headRefName),
+    })
     : pc.cyan(pr.headRefName);
 
   const buildDisplay = getBuildStatusDisplay({ pr });
