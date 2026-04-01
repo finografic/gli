@@ -116,8 +116,13 @@ export function terminalLink({ url, label }: { url: string; label: string }): st
  * Matches the first occurrence of PROJECT-NUMBER (e.g. SBS-1234, JIRA-42).
  * Ignores common branch prefixes like build-, feature-, fix-, etc.
  */
-export function getJiraTicketFromBranch({ branch }: { branch: string }): string | null {
-  const match = /([A-Z][A-Z0-9]+-\d+)/i.exec(branch);
+export function getJiraTicketFromBranch(
+  { branch, issuePrefix }: { branch: string; issuePrefix?: string },
+): string | null {
+  const pattern = issuePrefix
+    ? new RegExp(`(${issuePrefix}-\\d+)`, 'i')
+    : /([A-Z][A-Z0-9]+-\d+)/i;
+  const match = pattern.exec(branch);
   return match?.[1]?.toUpperCase() ?? null;
 }
 
@@ -134,7 +139,7 @@ export function formatPrLine(
     buildWidth = 0,
     commentsWidth = 0,
     compact = false,
-    jiraBaseUrl,
+    jiraConfig,
   }: {
     pr: PrStatus;
     prNumWidth?: number;
@@ -146,8 +151,8 @@ export function formatPrLine(
     commentsWidth?: number;
     /** Compact mode: hides title, shows only build icon, shows approval icon + count only. */
     compact?: boolean;
-    /** When set, the branch column becomes a clickable JIRA link for the extracted ticket. */
-    jiraBaseUrl?: string;
+    /** When set, the branch column becomes a clickable Jira link. */
+    jiraConfig?: { baseUrl: string; issuePrefix?: string };
   },
 ): string {
   // PR number with "PR#" prefix in magenta (clickable)
@@ -155,9 +160,11 @@ export function formatPrLine(
   const prNumber = terminalLink({ url: pr.url, label: pc.magenta(prNumText) });
 
   // Branch name in cyan — optionally clickable JIRA link
-  const ticket = jiraBaseUrl ? getJiraTicketFromBranch({ branch: pr.headRefName }) : null;
-  const branch = ticket && jiraBaseUrl
-    ? terminalLink({ url: `${jiraBaseUrl}/${ticket}`, label: pc.cyan(pr.headRefName) })
+  const ticket = jiraConfig
+    ? getJiraTicketFromBranch({ branch: pr.headRefName, issuePrefix: jiraConfig.issuePrefix })
+    : null;
+  const branch = ticket && jiraConfig
+    ? terminalLink({ url: `${jiraConfig.baseUrl}/${ticket}`, label: pc.cyan(pr.headRefName) })
     : pc.cyan(pr.headRefName);
 
   const buildDisplay = getBuildStatusDisplay({ pr });
@@ -222,8 +229,8 @@ interface FormatPrLinesParams {
   commentsWidth?: number;
   /** Compact mode: hides title, shows only build icon, shows approval icon + count only. */
   compact?: boolean;
-  /** When set, branch names become clickable JIRA ticket links. */
-  jiraBaseUrl?: string;
+  /** When set, branch names become clickable Jira ticket links. */
+  jiraConfig?: { baseUrl: string; issuePrefix?: string };
 }
 
 /**
@@ -241,7 +248,7 @@ export function formatPrLines(
     buildWidth: buildWidthOverride,
     commentsWidth: commentsWidthOverride,
     compact = false,
-    jiraBaseUrl,
+    jiraConfig,
   }: FormatPrLinesParams,
 ): string[] {
   if (prs.length === 0) return [];
@@ -276,7 +283,7 @@ export function formatPrLines(
       buildWidth,
       commentsWidth,
       compact,
-      jiraBaseUrl,
+      jiraConfig,
     })
   );
 }
@@ -336,19 +343,4 @@ export function formatSelectOptions(
       label: `${branch}  ${pc.dim(truncated)}`,
     };
   });
-}
-
-/**
- * Get summary line for PR list.
- */
-export function getPrSummary({ pullRequests }: { pullRequests: PrStatus[] }): string {
-  const needsRebaseCount = pullRequests.filter(
-    (pr) => pr.mergeStateStatus === 'BEHIND' || pr.mergeStateStatus === 'DIRTY',
-  ).length;
-
-  const needsRebaseText = pc.yellow(
-    `${needsRebaseCount} need${needsRebaseCount === 1 ? 's' : ''} rebase`,
-  );
-
-  return needsRebaseText;
 }

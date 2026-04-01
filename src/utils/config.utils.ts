@@ -4,29 +4,32 @@ import { join } from 'node:path';
 
 import {
   DEFAULT_CACHE_MAX_AGE_SECONDS,
-  DEFAULT_CHECK_INTERVAL,
   DEFAULT_LIVE_INTERVAL,
   DEFAULT_PR_TITLE_MAX_CHARS,
 } from '../config/defaults.constants.js';
 import { DEFAULT_PR_TITLE_SLICE_START } from '../config/ui.constants.js';
 import type { RepoSection } from './gh.utils.js';
 
+export interface JiraConfig {
+  baseUrl: string;
+  /** When set, only branches containing this prefix will get Jira links (e.g. "SBS"). */
+  issuePrefix?: string;
+}
+
 export interface RepoConfig {
   localPath: string;
   remote: string;
+  jira?: JiraConfig;
 }
 
 export interface GitCliConfig {
   repos: RepoConfig[];
-  checkInterval?: number;
   liveInterval?: number;
-  notifyOn?: string[];
   /**
-   * Base URL for JIRA, used to make branch-name ticket numbers clickable.
-   * Example: "https://your-org.atlassian.net/browse"
-   * Ticket is extracted from the branch name (e.g. build-SBS-1234 → SBS-1234).
+   * Global Jira config — applies to all repos unless overridden per-repo.
+   * Example: { "baseUrl": "https://your-org.atlassian.net/browse", "issuePrefix": "PROJ" }
    */
-  jiraBaseUrl?: string;
+  jira?: JiraConfig;
   prListing?: {
     title?: {
       display?: boolean;
@@ -43,10 +46,7 @@ export interface GitCliConfig {
  */
 const FULL_DEFAULT_CONFIG: GitCliConfig = {
   repos: [],
-  checkInterval: DEFAULT_CHECK_INTERVAL,
   liveInterval: DEFAULT_LIVE_INTERVAL,
-  notifyOn: ['BEHIND', 'DIRTY'],
-  // jiraBaseUrl: 'https://your-org.atlassian.net/browse',
   prListing: {
     title: {
       display: false,
@@ -120,7 +120,18 @@ export const readConfig = (): GitCliConfig => {
       return { ...FULL_DEFAULT_CONFIG };
     }
 
-    return parsed as GitCliConfig;
+    const parsedRecord = parsed as Record<string, unknown>;
+    const config = parsed as GitCliConfig;
+    const legacyJiraBaseUrl = parsedRecord['jiraBaseUrl'];
+
+    if (!config.jira && typeof legacyJiraBaseUrl === 'string' && legacyJiraBaseUrl.length > 0) {
+      return {
+        ...config,
+        jira: { baseUrl: legacyJiraBaseUrl },
+      };
+    }
+
+    return config;
   } catch {
     return { ...FULL_DEFAULT_CONFIG };
   }

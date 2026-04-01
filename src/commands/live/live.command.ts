@@ -40,7 +40,7 @@ function renderFromCache(): void {
     liveInterval,
     isLive: true,
     compact: isCompact,
-    jiraBaseUrl: config.jiraBaseUrl,
+    jiraConfig: config.jira,
   });
   logUpdate(output);
 }
@@ -68,7 +68,6 @@ async function fetchAndDisplay(): Promise<void> {
       liveInterval,
       isLive: true,
       compact: isCompact,
-      jiraBaseUrl: config.jiraBaseUrl,
     });
 
     logUpdate(output);
@@ -129,7 +128,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
   The dashboard shows:
   - PR list with status indicators (clickable PR numbers and repo names)
   - Build and approval status columns
-  - Config and daemon status
+  - Config path footer
 
   Refresh interval defaults to ${DEFAULT_LIVE_INTERVAL}s. Customize via \`gli config edit\` (liveInterval).`,
         },

@@ -218,6 +218,8 @@ export interface RepoSection {
   repoInfo: RepoInfo | null;
   pullRequests: PrStatus[];
   error?: string;
+  /** Per-repo Jira config attached during fetch. */
+  jiraConfig?: { baseUrl: string; issuePrefix?: string };
 }
 
 /**

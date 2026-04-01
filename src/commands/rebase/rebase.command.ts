@@ -7,10 +7,10 @@ import pc from 'picocolors';
 import { readConfig } from '../../utils/config.utils.js';
 import type { FlowContext } from '../../utils/flow.utils.js';
 import { createFlowContext, promptConfirm } from '../../utils/flow.utils.js';
-import type { PrStatus } from '../../utils/gh.utils.js';
+import type { PrStatus, RepoSection } from '../../utils/gh.utils.js';
 import { assertGhAvailable, fetchDefaultBranch } from '../../utils/gh.utils.js';
 import { printCommandHelp } from '../../utils/help.utils.js';
-import { formatPrLines, getPrSummary } from '../../utils/pr-display.utils.js';
+import { formatPrLines } from '../../utils/pr-display.utils.js';
 import { fetchPrSections } from '../../utils/pr-sections.utils.js';
 
 interface RunRebaseCommandParams {
@@ -301,8 +301,23 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
   console.log(`  ${pc.dim('•')} Fetching your open PRs...`);
   let allPrs: PrStatus[];
   try {
-    // fetchPrSections falls back to the current repo when none are configured
-    const sections = await fetchPrSections();
+    const allSections = await fetchPrSections();
+    const cwd = process.cwd();
+    const config = readConfig();
+    const matchedRepo = config.repos.find((r) =>
+      cwd === r.localPath || cwd.startsWith(`${r.localPath}/`)
+    );
+    let sections: RepoSection[];
+    if (matchedRepo) {
+      const normalise = (u: string) => u.replace(/\.git$/, '').replace(/\/+$/, '');
+      const remoteKey = normalise(matchedRepo.remote);
+      sections = allSections.filter(
+        (s) => s.repoInfo != null && normalise(s.repoInfo.url) === remoteKey,
+      );
+      if (sections.length === 0) sections = allSections;
+    } else {
+      sections = allSections;
+    }
     allPrs = sections.flatMap((s) => s.pullRequests);
   } catch (error: unknown) {
     console.log(`  ${pc.red('✗')} Failed to fetch PRs`);
@@ -316,6 +331,11 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
   console.log('');
 
   const config = readConfig();
+  const cwd = process.cwd();
+  const matchedRepoConfig = config.repos.find(
+    (r) => cwd === r.localPath || cwd.startsWith(`${r.localPath}/`),
+  );
+  const jiraConfig = matchedRepoConfig?.jira ?? config.jira;
 
   // Show full report (all PRs) — compact by default in rebase context
   const formattedLines = formatPrLines({
@@ -323,14 +343,11 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
     showTitle: config.prListing?.title?.display,
     titleMaxChars: config.prListing?.title?.maxChars,
     compact: true,
-    jiraBaseUrl: config.jiraBaseUrl,
+    jiraConfig,
   });
   for (const line of formattedLines) {
     console.log(`  ${line}`);
   }
-
-  console.log(`  ${getPrSummary({ pullRequests })}`);
-  console.log('');
 
   if (stalePrs.length === 0) {
     console.log(`  ${pc.green('✓')} All PRs are up to date. Nothing to rebase.`);
@@ -346,10 +363,8 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
     exit(1);
   }
 
-  console.log(`  ${pc.dim('Default branch:')} ${pc.white(defaultBranch)}`);
   console.log('');
 
-  // Determine which PRs to rebase
   let toRebase: PrStatus[];
 
   if (all) {

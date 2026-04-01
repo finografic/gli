@@ -24,7 +24,6 @@ gli <command>
   rebase  Interactively rebase branches that are behind
   select  Interactively checkout a branch for one of your PRs
   config  Manage multi-repo configuration
-  watch   Background PR monitoring with macOS notifications
 ```
 
 ### `gli live` ⭐
@@ -32,20 +31,20 @@ gli <command>
 Live-updating terminal dashboard for PR status monitoring (like htop, but for your PRs).
 
 ```bash
-gli live    # Start live dashboard (refreshes every 5s)
+gli live    # Start live dashboard (refreshes every 60s)
 ```
 
 Perfect for keeping a terminal panel open to monitor your pull requests in real-time. Shows:
 
 - PR list with status indicators, including build and approval columns plus unresolved comments (`💬 N`) when present
 - Clickable PR numbers and repo names
-- Config and daemon status
+- Config path footer
 
-The refresh interval defaults to 5s and is configurable via `gli config edit` (`liveInterval`).
+The refresh interval defaults to 60s and is configurable via `gli config edit` (`liveInterval`).
 
 ### `gli status`
 
-Same output as `gli live`, but prints once and exits — no watching or repainting.
+Same output as `gli live`, but prints once and exits — no live repaint loop.
 
 ```bash
 gli status    # Print PR status snapshot and exit
@@ -100,27 +99,14 @@ gli config edit      # Open config in $EDITOR
 
 **Config options** (all shown in the generated config file):
 
-| Key                          | Default              | Description                                        |
-| ---------------------------- | -------------------- | -------------------------------------------------- |
-| `liveInterval`               | `5`                  | Refresh interval in seconds for `gli live`         |
-| `checkInterval`              | `60`                 | Background watch check interval in seconds         |
-| `notifyOn`                   | `["BEHIND","DIRTY"]` | PR states that trigger notifications               |
-| `prListing.title.display`    | `false`              | Show PR title column                               |
-| `prListing.title.maxChars`   | `40`                 | Max title characters to display                    |
-| `prListing.title.sliceStart` | `0`                  | Skip N chars from title start (e.g. ticket prefix) |
-
-### `gli watch`
-
-Background PR monitoring via macOS LaunchAgent. Sends native notifications showing repo, branch, and status when PRs need attention.
-
-```bash
-gli watch install      # Install the LaunchAgent (checks every 60s)
-gli watch uninstall    # Remove the LaunchAgent
-gli watch status       # Show agent status
-gli watch check        # Run a one-off check
-```
-
-Notifications show detailed PR information — see alert, then run `gli live` for the interactive dashboard.
+| Key                          | Default   | Description                                        |
+| ---------------------------- | --------- | -------------------------------------------------- |
+| `liveInterval`               | `60`      | Refresh interval in seconds for `gli live`         |
+| `jira.baseUrl`               | _(unset)_ | Global Jira browse URL for branch ticket links     |
+| `jira.issuePrefix`           | _(unset)_ | Optional Jira key prefix filter (e.g. `SBS`)       |
+| `prListing.title.display`    | `false`   | Show PR title column                               |
+| `prListing.title.maxChars`   | `40`      | Max title characters to display                    |
+| `prListing.title.sliceStart` | `0`       | Skip N chars from title start (e.g. ticket prefix) |
 
 ## Prerequisites
 
@@ -130,7 +116,7 @@ Notifications show detailed PR information — see alert, then run `gli live` fo
 
 ```bash
 pnpm install        # Install dependencies (sets up git hooks)
-pnpm dev            # Watch mode
+pnpm dev            # Dev mode
 pnpm build          # Build
 pnpm test.run       # Tests
 pnpm lint           # Lint

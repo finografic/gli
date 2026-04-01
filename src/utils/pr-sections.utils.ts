@@ -1,8 +1,9 @@
 import pc from 'picocolors';
 
+import { DEFAULT_JIRA_BASE_URL, DEFAULT_JIRA_ISSUE_PREFIX } from '../config/defaults.constants.js';
 import { COMPACT_TOGGLE_KEY } from '../config/ui.constants.js';
+import type { JiraConfig } from './config.utils.js';
 import { getConfigFilePath, readConfig, tildeify } from './config.utils.js';
-import { isDaemonInstalled, isDaemonRunning } from './daemon.utils.js';
 import type { RepoInfo, RepoSection } from './gh.utils.js';
 import { fetchMyOpenPrs, fetchRepoInfo } from './gh.utils.js';
 import { computeColumnWidths, formatPrLines, terminalLink } from './pr-display.utils.js';
@@ -17,7 +18,7 @@ interface RenderDisplayParams {
   liveInterval: number;
   isLive: boolean;
   compact?: boolean;
-  jiraBaseUrl?: string;
+  jiraConfig?: JiraConfig;
 }
 
 /**
@@ -32,7 +33,7 @@ export function renderDisplay({
   liveInterval,
   isLive,
   compact = false,
-  jiraBaseUrl,
+  jiraConfig,
 }: RenderDisplayParams): string {
   const lines: string[] = [];
 
@@ -67,7 +68,7 @@ export function renderDisplay({
   const allPrs = visibleSections.flatMap((s) => s.pullRequests);
   const globalWidths = computeColumnWidths({ prs: allPrs });
 
-  for (const { repoInfo, pullRequests, error } of visibleSections) {
+  for (const { repoInfo, pullRequests, jiraConfig: sectionJira, error } of visibleSections) {
     if (repoInfo) {
       const pullsUrl = `${repoInfo.url}/pulls`;
       const repoLink = terminalLink({
@@ -75,7 +76,7 @@ export function renderDisplay({
         label: pc.bold(pc.white(repoInfo.nameWithOwner)),
       });
       lines.push(`  ${repoLink}`);
-      lines.push('');
+      // lines.push('');
     }
 
     if (error) {
@@ -87,7 +88,7 @@ export function renderDisplay({
         titleMaxChars,
         titleSliceStart,
         compact,
-        jiraBaseUrl,
+        jiraConfig: sectionJira ?? jiraConfig,
         ...globalWidths,
       });
       for (const line of formattedLines) {
@@ -99,24 +100,9 @@ export function renderDisplay({
   }
 
   // Metadata Footer
-  const daemonInstalled = isDaemonInstalled();
-  const daemonRunning = isDaemonRunning();
-
-  // Calculate label width for alignment
-  const labels = ['config:', 'daemon:'];
-  const labelWidth = Math.max(...labels.map((l) => l.length));
-
-  // Daemon status
-  const daemonStatus = daemonRunning
-    ? pc.green('✓ running')
-    : daemonInstalled
-    ? pc.yellow('○ installed, not running')
-    : pc.dim('not installed');
-  lines.push(`  ${pc.white('daemon:'.padEnd(labelWidth))}  ${daemonStatus}`);
-
-  // Config info
+  // Config footer
   lines.push(
-    `  ${pc.white('config:'.padEnd(labelWidth))}  ${pc.dim(tildeify(getConfigFilePath()))}`,
+    `  ${pc.dim(tildeify(getConfigFilePath()))}`,
   );
 
   lines.push('');
@@ -141,6 +127,11 @@ export async function fetchPrSections(): Promise<RepoSection[]> {
   const config = readConfig();
 
   if (config.repos.length > 0) {
+    const globalJira: JiraConfig | undefined = config.jira
+      ?? (DEFAULT_JIRA_BASE_URL
+        ? { baseUrl: DEFAULT_JIRA_BASE_URL, issuePrefix: DEFAULT_JIRA_ISSUE_PREFIX }
+        : undefined);
+
     return Promise.all(
       config.repos.map(async (repo) => {
         try {
@@ -149,11 +140,13 @@ export async function fetchPrSections(): Promise<RepoSection[]> {
           return {
             repoInfo,
             pullRequests: allPrs.filter((pr) => !pr.isDraft),
+            jiraConfig: repo.jira ?? globalJira,
           };
         } catch (error: unknown) {
           return {
             repoInfo: null,
             pullRequests: [],
+            jiraConfig: repo.jira ?? globalJira,
             error: error instanceof Error ? error.message : 'Unknown error',
           };
         }

@@ -18,7 +18,6 @@ export function printHelp(): void {
     { name: 'rebase', desc: 'Interactively rebase branches that are behind' },
     { name: 'select', desc: 'Interactively checkout a branch for one of your PRs' },
     { name: 'config', desc: 'Manage multi-repo configuration' },
-    { name: 'watch', desc: 'Background PR monitoring with macOS notifications' },
   ];
   const maxNameLength = Math.max(...commands.map((c) => c.name.length));
   for (const cmd of commands) {
@@ -41,7 +40,6 @@ export function printHelp(): void {
     { cmd: 'gli rebase --all -y', comment: 'Rebase all stale branches, auto-confirm each' },
     { cmd: 'gli config add', comment: 'Add current repo to config' },
     { cmd: 'gli config edit', comment: 'Edit config in $EDITOR' },
-    { cmd: 'gli watch install', comment: 'Install background monitoring' },
   ];
   const maxCmdLength = Math.max(...examples.map((e) => e.cmd.length));
   for (const ex of examples) {

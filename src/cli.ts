@@ -10,7 +10,6 @@ import { runLiveCommand } from './commands/live/index.js';
 import { runRebaseCommand } from './commands/rebase/index.js';
 import { runSelectCommand } from './commands/select/index.js';
 import { runStatusCommand } from './commands/status/index.js';
-import { runWatchCommand } from './commands/watch/index.js';
 import { printHelp } from './gli.help.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -66,11 +65,6 @@ const main = async () => {
 
   if (command === 'status') {
     await runStatusCommand({ argv: argv.slice(1) });
-    return;
-  }
-
-  if (command === 'watch') {
-    await runWatchCommand({ argv: argv.slice(1) });
     return;
   }
 
