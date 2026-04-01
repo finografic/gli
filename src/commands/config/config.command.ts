@@ -4,15 +4,9 @@ import { cwd } from 'node:process';
 import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 
-import {
-  addRepo,
-  getConfigFilePath,
-  listRepos,
-  removeRepo,
-  tildeify,
-} from '../../utils/config.utils.js';
-import { getGitHubUrlFromPath } from '../../utils/git.utils.js';
-import { printCommandHelp } from '../../utils/help.utils.js';
+import { addRepo, getConfigFilePath, listRepos, removeRepo, tildeify } from 'utils/config.utils.js';
+import { getGitHubUrlFromPath } from 'utils/git.utils.js';
+import { printCommandHelp } from 'utils/help.utils.js';
 
 interface RunConfigCommandParams {
   argv: string[];

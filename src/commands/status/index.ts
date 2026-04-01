@@ -1,1 +1,1 @@
-export { runStatusCommand } from './status.command.js';
+export { runStatusCommand } from 'commands/status/status.command.js';

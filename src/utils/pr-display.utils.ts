@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 
-import { isJiraLinksEnabled } from './config.utils.js';
-import type { PrStatus } from './gh.utils.js';
+import { isJiraLinksEnabled } from 'utils/config.utils.js';
+import type { PrStatus } from 'utils/gh.utils.js';
 
 interface StatusDisplay {
   symbol: string;

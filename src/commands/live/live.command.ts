@@ -1,21 +1,18 @@
 import logUpdate from 'log-update';
 import pc from 'picocolors';
 
-import {
-  DEFAULT_LIVE_INTERVAL,
-  DEFAULT_PR_TITLE_MAX_CHARS,
-} from '../../config/defaults.constants.js';
+import { readConfig, writeCache } from 'utils/config.utils.js';
+import type { RepoSection } from 'utils/gh.utils.js';
+import { assertGhAvailable } from 'utils/gh.utils.js';
+import { printCommandHelp } from 'utils/help.utils.js';
+import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
+import { DEFAULT_LIVE_INTERVAL, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
 import {
   COMPACT_TOGGLE_KEY,
   DEFAULT_PR_TITLE_SLICE_START,
   SPINNER_INTERVAL_MS,
   SPINNER_SEQUENCE,
-} from '../../config/ui.constants.js';
-import { readConfig, writeCache } from '../../utils/config.utils.js';
-import type { RepoSection } from '../../utils/gh.utils.js';
-import { assertGhAvailable } from '../../utils/gh.utils.js';
-import { printCommandHelp } from '../../utils/help.utils.js';
-import { fetchPrSections, renderDisplay } from '../../utils/pr-sections.utils.js';
+} from 'config/ui.constants.js';
 
 interface RunLiveCommandParams {
   argv: string[];

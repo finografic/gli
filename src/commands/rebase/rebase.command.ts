@@ -4,14 +4,14 @@ import { exit } from 'node:process';
 import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 
-import { readConfig } from '../../utils/config.utils.js';
-import type { FlowContext } from '../../utils/flow.utils.js';
-import { createFlowContext, promptConfirm } from '../../utils/flow.utils.js';
-import type { PrStatus, RepoSection } from '../../utils/gh.utils.js';
-import { assertGhAvailable, fetchDefaultBranch } from '../../utils/gh.utils.js';
-import { printCommandHelp } from '../../utils/help.utils.js';
-import { formatPrLines } from '../../utils/pr-display.utils.js';
-import { fetchPrSections } from '../../utils/pr-sections.utils.js';
+import { readConfig } from 'utils/config.utils.js';
+import type { FlowContext } from 'utils/flow.utils.js';
+import { createFlowContext, promptConfirm } from 'utils/flow.utils.js';
+import type { PrStatus, RepoSection } from 'utils/gh.utils.js';
+import { assertGhAvailable, fetchDefaultBranch } from 'utils/gh.utils.js';
+import { printCommandHelp } from 'utils/help.utils.js';
+import { formatPrLines } from 'utils/pr-display.utils.js';
+import { fetchPrSections } from 'utils/pr-sections.utils.js';
 
 interface RunRebaseCommandParams {
   argv: string[];

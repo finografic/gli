@@ -2,15 +2,12 @@ import { exit } from 'node:process';
 
 import pc from 'picocolors';
 
-import {
-  DEFAULT_LIVE_INTERVAL,
-  DEFAULT_PR_TITLE_MAX_CHARS,
-} from '../../config/defaults.constants.js';
-import { DEFAULT_PR_TITLE_SLICE_START } from '../../config/ui.constants.js';
-import { readConfig } from '../../utils/config.utils.js';
-import { assertGhAvailable } from '../../utils/gh.utils.js';
-import { printCommandHelp } from '../../utils/help.utils.js';
-import { fetchPrSections, renderDisplay } from '../../utils/pr-sections.utils.js';
+import { readConfig } from 'utils/config.utils.js';
+import { assertGhAvailable } from 'utils/gh.utils.js';
+import { printCommandHelp } from 'utils/help.utils.js';
+import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
+import { DEFAULT_LIVE_INTERVAL, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
+import { DEFAULT_PR_TITLE_SLICE_START } from 'config/ui.constants.js';
 
 interface RunStatusCommandParams {
   argv: string[];

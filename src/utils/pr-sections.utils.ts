@@ -1,12 +1,12 @@
 import pc from 'picocolors';
 
-import { DEFAULT_JIRA_BASE_URL, DEFAULT_JIRA_ISSUE_PREFIX } from '../config/defaults.constants.js';
-import { COMPACT_TOGGLE_KEY } from '../config/ui.constants.js';
-import type { JiraConfig } from './config.utils.js';
-import { getConfigFilePath, readConfig, tildeify } from './config.utils.js';
-import type { RepoInfo, RepoSection } from './gh.utils.js';
-import { fetchMyOpenPrs, fetchRepoInfo } from './gh.utils.js';
-import { computeColumnWidths, formatPrLines, terminalLink } from './pr-display.utils.js';
+import type { JiraConfig } from 'utils/config.utils.js';
+import { getConfigFilePath, readConfig, tildeify } from 'utils/config.utils.js';
+import type { RepoInfo, RepoSection } from 'utils/gh.utils.js';
+import { fetchMyOpenPrs, fetchRepoInfo } from 'utils/gh.utils.js';
+import { computeColumnWidths, formatPrLines, terminalLink } from 'utils/pr-display.utils.js';
+import { DEFAULT_JIRA_BASE_URL, DEFAULT_JIRA_ISSUE_PREFIX } from 'config/defaults.constants.js';
+import { COMPACT_TOGGLE_KEY } from 'config/ui.constants.js';
 
 export type { RepoSection };
 

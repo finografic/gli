@@ -2,13 +2,13 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+import type { RepoSection } from 'utils/gh.utils.js';
 import {
   DEFAULT_CACHE_MAX_AGE_SECONDS,
   DEFAULT_LIVE_INTERVAL,
   DEFAULT_PR_TITLE_MAX_CHARS,
-} from '../config/defaults.constants.js';
-import { DEFAULT_PR_TITLE_SLICE_START } from '../config/ui.constants.js';
-import type { RepoSection } from './gh.utils.js';
+} from 'config/defaults.constants.js';
+import { DEFAULT_PR_TITLE_SLICE_START } from 'config/ui.constants.js';
 
 export interface JiraConfig {
   /**

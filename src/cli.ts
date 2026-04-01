@@ -5,11 +5,12 @@ import { dirname, join } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { runConfigCommand } from './commands/config/index.js';
-import { runLiveCommand } from './commands/live/index.js';
-import { runRebaseCommand } from './commands/rebase/index.js';
-import { runSelectCommand } from './commands/select/index.js';
-import { runStatusCommand } from './commands/status/index.js';
+import { runConfigCommand } from 'commands/config/index.js';
+import { runLiveCommand } from 'commands/live/index.js';
+import { runRebaseCommand } from 'commands/rebase/index.js';
+import { runSelectCommand } from 'commands/select/index.js';
+import { runStatusCommand } from 'commands/status/index.js';
+
 import { printHelp } from './gli.help.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

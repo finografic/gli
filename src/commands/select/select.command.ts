@@ -5,11 +5,11 @@ import { exit } from 'node:process';
 import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 
-import { isCacheFresh, readCache, readConfig } from '../../utils/config.utils.js';
-import type { PrStatus } from '../../utils/gh.utils.js';
-import { assertGhAvailable, fetchMyOpenPrs } from '../../utils/gh.utils.js';
-import { printCommandHelp } from '../../utils/help.utils.js';
-import { formatPrLines, formatSelectOptions } from '../../utils/pr-display.utils.js';
+import { isCacheFresh, readCache, readConfig } from 'utils/config.utils.js';
+import type { PrStatus } from 'utils/gh.utils.js';
+import { assertGhAvailable, fetchMyOpenPrs } from 'utils/gh.utils.js';
+import { printCommandHelp } from 'utils/help.utils.js';
+import { formatPrLines, formatSelectOptions } from 'utils/pr-display.utils.js';
 
 interface RunSelectCommandParams {
   argv: string[];
