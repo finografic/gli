@@ -5,7 +5,8 @@ import { exit } from 'node:process';
 import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 
-import { isCacheFresh, readCache, readConfig } from 'utils/config.utils.js';
+import { isCacheFresh, readCache } from 'utils/cache.utils.js';
+import { readConfig } from 'utils/config.utils.js';
 import type { PrStatus } from 'utils/gh.utils.js';
 import { assertGhAvailable, fetchMyOpenPrs } from 'utils/gh.utils.js';
 import { printCommandHelp } from 'utils/help.utils.js';

@@ -6,7 +6,10 @@ import { readConfig } from 'utils/config.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
 import { printCommandHelp } from 'utils/help.utils.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
-import { DEFAULT_LIVE_INTERVAL, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
+import {
+  DEFAULT_LIVE_INTERVAL_SECONDS,
+  DEFAULT_PR_TITLE_MAX_CHARS,
+} from 'config/defaults.constants.js';
 import { DEFAULT_PR_TITLE_SLICE_START } from 'config/ui.constants.js';
 
 interface RunStatusCommandParams {
@@ -61,7 +64,7 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
     const showTitle = config.prListing?.title?.display ?? false;
     const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
     const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
-    const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL;
+    const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
 
     const output = renderDisplay({
       sections,

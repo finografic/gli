@@ -28,24 +28,23 @@ Rules are canonical in `.github/instructions/` and shared across Claude Code, Cu
 
 ## Project-Specific
 
-Project-specific rules live in `.github/instructions/project/`. Add `*.instructions.md` files there and link them here.
+Project-specific rules live in `.github/instructions/project/**/*.instructions.md`.
 
-<!-- NOTE: CLI projects (genx:type:cli keyword in package.json) only -->
+<!-- NOTE: CLI package (`genx:type:cli` keyword in package.json) only -->
 
-- Generated README sections are managed by `pnpm docs.usage` — never edit content between `<!-- GENERATED:*:START/END -->` markers by hand.
-
-- This is a **standalone installable package** (`@finografic/design-system`), not a monorepo workspace.
+- This is a **standalone installable package** (`@finografic/gli`), not a monorepo workspace member.
 - Published to GitHub Packages (`https://npm.pkg.github.com`).
 - Do not include `Co-Authored-By` lines in commit messages.
 - Do not reference `@workspace/*` — all imports and deps must use published package names.
-- The `panda.preset` entry must always build with `platform: 'node'` in tsdown.
-- Never add `watch: true` to `panda.config.ts` — it causes `panda codegen` to hang.
 
 ## Learned User Preferences
 
-- Follow existing recipe patterns for naming, structure, and variant conventions
-- Apply recipes inside design-system components; client uses `<Button variant="..." />` without calling the recipe
-- Use cva for single-element components (e.g. Button); use sva for multi-slot components (Checkbox, Card, Dialog)
-- Use @stylistic/stylelint-plugin for Stylelint 17; stylelint-stylistic is deprecated and incompatible
 - Ignore .cursor/chats and .cursor/hooks; commit .cursor/mcp.json
-- Use Panda MCP for design-system questions (breakpoints, tokens, recipes) when relevant without explicit user ask
+- Prefer default `~/.config/gli/config.json` templates that list all keys (including optional blocks like `jira` with empty strings) so users can edit without inferring field names
+
+## Learned Workspace Facts
+
+- The npm package is `@finografic/gli`; the repo and package were renamed from `git-cli` / `@finografic/git-cli`.
+- The CLI entry is `src/cli.ts`, built to `dist/cli.mjs`; `main`, `types`, `exports["."]`, and `bin.gli` all target that bundle.
+- TypeScript `paths` in `tsconfig` are resolved when bundling with tsdown; Vitest (or other runners) needs matching alias resolution if tests import via those aliases.
+- Jira issue links in PR output are off when `jira.baseUrl` is missing, empty, or whitespace-only after trim; legacy top-level `jiraBaseUrl` in config is not read.

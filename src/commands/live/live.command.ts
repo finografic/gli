@@ -1,12 +1,17 @@
 import logUpdate from 'log-update';
 import pc from 'picocolors';
 
-import { readConfig, writeCache } from 'utils/config.utils.js';
+import { writeCache } from 'utils/cache.utils.js';
+import { readConfig } from 'utils/config.utils.js';
 import type { RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
 import { printCommandHelp } from 'utils/help.utils.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
-import { DEFAULT_LIVE_INTERVAL, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
+import {
+  DEFAULT_LIVE_INTERVAL_SECONDS,
+  DEFAULT_PR_TITLE_MAX_CHARS,
+} from 'config/defaults.constants.js';
+import { KEYCODES } from 'config/keycodes.constants';
 import {
   COMPACT_TOGGLE_KEY,
   DEFAULT_PR_TITLE_SLICE_START,
@@ -28,7 +33,7 @@ function renderFromCache(): void {
   const showTitle = config.prListing?.title?.display ?? false;
   const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
   const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
-  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL;
+  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
   const output = renderDisplay({
     sections: cachedSections,
     showTitle,
@@ -55,7 +60,7 @@ async function fetchAndDisplay(): Promise<void> {
     const showTitle = config.prListing?.title?.display ?? false;
     const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
     const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
-    const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL;
+    const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
 
     const output = renderDisplay({
       sections,
@@ -109,7 +114,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
         {
           command: 'gli live',
           description:
-            `Start live dashboard (refreshes every ${DEFAULT_LIVE_INTERVAL}s by default)`,
+            `Start live dashboard (refreshes every ${DEFAULT_LIVE_INTERVAL_SECONDS}s by default)`,
         },
         {
           command: 'gli config edit',
@@ -127,7 +132,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
   - Build and approval status columns
   - Config path footer
 
-  Refresh interval defaults to ${DEFAULT_LIVE_INTERVAL}s. Customize via \`gli config edit\` (liveInterval).`,
+  Refresh interval defaults to ${DEFAULT_LIVE_INTERVAL_SECONDS}s. Customize via \`gli config edit\` (liveInterval).`,
         },
       ],
     });
@@ -159,7 +164,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
       if (key === COMPACT_TOGGLE_KEY.binding) {
         isCompact = !isCompact;
         renderFromCache();
-      } else if (key === '\x03' || key === 'q') {
+      } else if (key === KEYCODES.CTRL_C || key === KEYCODES.Q) {
         // Ctrl+C or q — exit cleanly
         process.exit(0);
       }
@@ -176,7 +181,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
 
   // Read interval from config for the polling loop
   const config = readConfig();
-  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL;
+  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
   const intervalMs = liveInterval * 1000;
 
   setInterval(() => {
