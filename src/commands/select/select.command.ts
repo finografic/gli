@@ -8,7 +8,7 @@ import { isCacheFresh, readCache } from 'utils/cache.utils.js';
 import { readConfig } from 'utils/config.utils.js';
 import type { PrStatus } from 'utils/gh.utils.js';
 import { assertGhAvailable, fetchMyOpenPrs } from 'utils/gh.utils.js';
-import { printCommandHelp } from 'utils/help.utils.js';
+import { renderCommandHelp } from 'core/render-help/index.js';
 import { formatPrLines, formatSelectOptions } from 'utils/pr-display.utils.js';
 
 interface RunSelectCommandParams {
@@ -20,7 +20,7 @@ interface RunSelectCommandParams {
  */
 export async function runSelectCommand({ argv }: RunSelectCommandParams): Promise<void> {
   if (argv.includes('--help') || argv.includes('-h')) {
-    printCommandHelp({
+    renderCommandHelp({
       command: 'gli select',
       description: 'Interactively checkout a branch from one of your open PRs',
       usage: 'gli select',

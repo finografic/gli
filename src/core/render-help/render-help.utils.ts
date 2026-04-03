@@ -1,8 +1,15 @@
+// ⚠️ AVOID EDITING THIS FILE DIRECTLY — changes must be propagated to all @finografic CLI repos
 import pc from 'picocolors';
-import type { HelpConfig } from './help.types.js';
+import type { CommandHelpConfig, HelpConfig } from './help.types.js';
 
 function colorizeArgs(str: string): string {
   return str.replace(/<[^>]+>/g, (m) => pc.dim(pc.cyan(m)));
+}
+
+function colorizeUsage(usage: string): string {
+  return usage
+    .replace(/^([^\s<[]+(?:\s+[^\s<[]+)*)/, (m) => pc.cyanBright(m))
+    .replace(/<[^>]+>/g, (m) => pc.dim(pc.cyan(m)));
 }
 
 export function renderHelp({ main, commands, examples, footer }: HelpConfig): void {
@@ -43,6 +50,81 @@ export function renderHelp({ main, commands, examples, footer }: HelpConfig): vo
       lines.push(`  ${colorizeArgs(item.label)}${desc}`);
     }
     lines.push('');
+  }
+
+  console.log(lines.join('\n'));
+}
+
+export function renderCommandHelp({
+  command,
+  description,
+  usage,
+  subcommands,
+  options,
+  examples,
+  requirements,
+  howItWorks,
+  sections,
+}: CommandHelpConfig): void {
+  const lines: string[] = [];
+
+  lines.push('');
+  lines.push(`${pc.bold(command)} - ${description}`);
+  lines.push('');
+
+  lines.push(pc.bold('USAGE'));
+  lines.push(`  ${colorizeUsage(usage)}`);
+  lines.push('');
+
+  if (subcommands && subcommands.length > 0) {
+    lines.push(pc.bold('SUBCOMMANDS'));
+    const maxLen = Math.max(...subcommands.map((s) => s.name.length));
+    for (const sub of subcommands) {
+      lines.push(`  ${pc.cyan(sub.name)}${' '.repeat(maxLen - sub.name.length + 4)}${sub.description}`);
+    }
+    lines.push('');
+  }
+
+  if (options && options.length > 0) {
+    lines.push(pc.bold('OPTIONS'));
+    const maxLen = Math.max(...options.map((f) => f.flag.length));
+    for (const opt of options) {
+      lines.push(`  ${opt.flag.padEnd(maxLen + 4)}${opt.description}`);
+    }
+    lines.push('');
+  }
+
+  if (examples && examples.length > 0) {
+    lines.push(pc.bold('EXAMPLES'));
+    const maxLen = Math.max(...examples.map((e) => e.command.length));
+    for (const ex of examples) {
+      lines.push(`  ${ex.command.padEnd(maxLen + 4)}${pc.dim('# ' + ex.description)}`);
+    }
+    lines.push('');
+  }
+
+  if (requirements && requirements.length > 0) {
+    lines.push(pc.bold('REQUIREMENTS'));
+    for (const req of requirements) {
+      lines.push(`  - ${req}`);
+    }
+    lines.push('');
+  }
+
+  if (howItWorks && howItWorks.length > 0) {
+    lines.push(pc.bold('HOW IT WORKS'));
+    for (let i = 0; i < howItWorks.length; i++) {
+      lines.push(`  ${i + 1}. ${howItWorks[i]}`);
+    }
+    lines.push('');
+  }
+
+  if (sections && sections.length > 0) {
+    for (const section of sections) {
+      lines.push(pc.bold(section.title));
+      lines.push(section.content);
+      lines.push('');
+    }
   }
 
   console.log(lines.join('\n'));

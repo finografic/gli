@@ -3,7 +3,7 @@ import pc from 'picocolors';
 
 import { readConfig } from 'utils/config.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
-import { printCommandHelp } from 'utils/help.utils.js';
+import { renderCommandHelp } from 'core/render-help/index.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
 import { DEFAULT_LIVE_INTERVAL_SECONDS, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
 import { DEFAULT_PR_TITLE_SLICE_START } from 'config/ui.constants.js';
@@ -17,7 +17,7 @@ interface RunStatusCommandParams {
  */
 export async function runStatusCommand({ argv }: RunStatusCommandParams): Promise<void> {
   if (argv.includes('--help') || argv.includes('-h')) {
-    printCommandHelp({
+    renderCommandHelp({
       command: 'gli status',
       description: 'Snapshot of PR status (same as gli live, exits immediately)',
       usage: 'gli status',

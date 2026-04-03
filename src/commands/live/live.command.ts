@@ -5,7 +5,7 @@ import { writeCache } from 'utils/cache.utils.js';
 import { readConfig } from 'utils/config.utils.js';
 import type { RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
-import { printCommandHelp } from 'utils/help.utils.js';
+import { renderCommandHelp } from 'core/render-help/index.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
 import { DEFAULT_LIVE_INTERVAL_SECONDS, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
 import { KEYCODES } from 'config/keycodes.constants';
@@ -95,7 +95,7 @@ function startSpinner(): () => void {
  */
 export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<void> {
   if (argv.includes('--help') || argv.includes('-h')) {
-    printCommandHelp({
+    renderCommandHelp({
       command: 'gli live',
       description: 'Live-updating PR status dashboard (⭐ RECOMMENDED)',
       usage: 'gli live',

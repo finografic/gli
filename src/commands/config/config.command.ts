@@ -5,7 +5,7 @@ import pc from 'picocolors';
 
 import { getConfigFilePath, tildeify } from 'utils/config.utils.js';
 import { getGitHubUrlFromPath } from 'utils/git.utils.js';
-import { printCommandHelp } from 'utils/help.utils.js';
+import { renderCommandHelp } from 'core/render-help/index.js';
 import { addRepo, listRepos, removeRepo } from 'utils/repos.utils.js';
 import { GITHUB_URL_PATTERN } from 'config/defaults.constants.js';
 
@@ -14,7 +14,7 @@ interface RunConfigCommandParams {
 }
 
 function printHelp(): void {
-  printCommandHelp({
+  renderCommandHelp({
     command: 'gli config',
     description: 'Manage multi-repo configuration',
     usage: 'gli config <subcommand>',

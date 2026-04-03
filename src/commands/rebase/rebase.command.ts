@@ -8,7 +8,7 @@ import type { FlowContext } from 'core/flow/index.js';
 import { readConfig } from 'utils/config.utils.js';
 import type { PrStatus, RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable, fetchDefaultBranch } from 'utils/gh.utils.js';
-import { printCommandHelp } from 'utils/help.utils.js';
+import { renderCommandHelp } from 'core/render-help/index.js';
 import { formatPrLines } from 'utils/pr-display.utils.js';
 import { fetchPrSections } from 'utils/pr-sections.utils.js';
 
@@ -204,7 +204,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   const stay = Boolean(flow.flags['stay']);
 
   if (argv.includes('--help') || argv.includes('-h')) {
-    printCommandHelp({
+    renderCommandHelp({
       command: 'gli rebase',
       description: 'Interactively rebase branches that are behind the default branch',
       usage: 'gli rebase [options]',
