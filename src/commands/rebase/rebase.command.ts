@@ -31,25 +31,27 @@ interface RebaseBranchResult {
   aborted: boolean;
 }
 
-const needsRebase = (pr: PrStatus): boolean =>
-  pr.mergeStateStatus === 'BEHIND' || pr.mergeStateStatus === 'DIRTY';
+function needsRebase(pr: PrStatus): boolean {
+  return pr.mergeStateStatus === 'BEHIND' || pr.mergeStateStatus === 'DIRTY';
+}
 
-const getCurrentBranch = (): string =>
-  execSync('git rev-parse --abbrev-ref HEAD', {
+function getCurrentBranch(): string {
+  return execSync('git rev-parse --abbrev-ref HEAD', {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
   }).trim();
+}
 
-const hasUncommittedChanges = (): boolean => {
+function hasUncommittedChanges(): boolean {
   const output = execSync('git status --porcelain', {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
   }).trim();
 
   return output.length > 0;
-};
+}
 
-const getCommitCount = ({ defaultBranch }: { defaultBranch: string }): number => {
+function getCommitCount({ defaultBranch }: { defaultBranch: string }): number {
   try {
     const count = execSync(`git rev-list --count origin/${defaultBranch}..HEAD`, {
       encoding: 'utf-8',
@@ -59,9 +61,9 @@ const getCommitCount = ({ defaultBranch }: { defaultBranch: string }): number =>
   } catch {
     return 0;
   }
-};
+}
 
-const rebaseBranch = async ({
+async function rebaseBranch({
   branch,
   _prNumber,
   defaultBranch,
@@ -69,7 +71,7 @@ const rebaseBranch = async ({
   squash,
   dryRun,
   flow,
-}: RebaseBranchParams): Promise<RebaseBranchResult> => {
+}: RebaseBranchParams): Promise<RebaseBranchResult> {
   if (dryRun) {
     const mode = squash ? 'squash and rebase' : interactive ? 'interactively rebase' : 'rebase';
     console.log(
@@ -183,9 +185,9 @@ const rebaseBranch = async ({
   }
 
   return { success: true, aborted: false };
-};
+}
 
-export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
+export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   const flow = createFlowContext(argv, {
     'dry-run': { type: 'boolean' },
     all: { type: 'boolean' },
@@ -504,4 +506,4 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
   }
 
   console.log('');
-};
+}

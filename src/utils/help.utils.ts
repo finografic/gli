@@ -26,11 +26,11 @@ interface CommandHelpOptions {
   sections?: HelpSection[];
 }
 
-/** Colorize a usage string: command prefix in bright cyan, <placeholder> tokens in dim cyan. */
-const colorizeUsage = (usage: string): string =>
-  usage
+function colorizeUsage(usage: string): string {
+  return usage
     .replace(/^([^\s<[]+(?:\s+[^\s<[]+)*)/, (m) => pc.cyanBright(m))
     .replace(/<[^>]+>/g, (m) => pc.dim(pc.cyan(m)));
+}
 
 /**
  * Format and print standardized help text for commands.

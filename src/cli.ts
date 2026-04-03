@@ -10,11 +10,12 @@ import { runRebaseCommand } from 'commands/rebase/index.js';
 import { runSelectCommand } from 'commands/select/index.js';
 import { runStatusCommand } from 'commands/status/index.js';
 
-import { printHelp } from './gli.help.js';
+import { renderHelp } from 'utils/render-help.utils.js';
+import { cliHelp } from './cli.help.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const getVersion = (): string => {
+function getVersion(): string {
   try {
     const packageJsonPath = join(__dirname, '..', 'package.json');
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
@@ -22,14 +23,21 @@ const getVersion = (): string => {
   } catch {
     return 'unknown';
   }
-};
+}
+
+type CommandHandler = () => Promise<void> | void;
 
 async function main(): Promise<void> {
   const [, , ...argv] = process.argv;
   const [command] = argv;
+  const args = argv.slice(1);
 
-  if (!command || command === 'help' || command === '--help' || command === '-h') {
-    printHelp();
+  /* ────────────────────────────────────────────────────────── */
+  /* Root help / version                                        */
+  /* ────────────────────────────────────────────────────────── */
+
+  if (!command || command === '--help' || command === '-h') {
+    renderHelp(cliHelp);
     return;
   }
 
@@ -38,35 +46,52 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (command === 'config') {
-    await runConfigCommand({ argv: argv.slice(1) });
+  /* ────────────────────────────────────────────────────────── */
+  /* Command registry                                           */
+  /* ────────────────────────────────────────────────────────── */
+
+  const commands: Record<string, CommandHandler> = {
+    config: async () => {
+      await runConfigCommand({ argv: args });
+    },
+    live: async () => {
+      await runLiveCommand({ argv: args });
+    },
+    rebase: async () => {
+      await runRebaseCommand({ argv: args });
+    },
+    select: async () => {
+      await runSelectCommand({ argv: args });
+    },
+    status: async () => {
+      await runStatusCommand({ argv: args });
+    },
+    help: () => {
+      renderHelp(cliHelp);
+    },
+  };
+
+  /* ────────────────────────────────────────────────────────── */
+  /* Guards                                                     */
+  /* ────────────────────────────────────────────────────────── */
+
+  if (!commands[command]) {
+    console.error(`Unknown command: ${command}`);
+    renderHelp(cliHelp);
+    exit(1);
     return;
   }
 
-  if (command === 'live') {
-    await runLiveCommand({ argv: argv.slice(1) });
-    return;
-  }
+  /* ────────────────────────────────────────────────────────── */
+  /* Execute                                                    */
+  /* ────────────────────────────────────────────────────────── */
 
-  if (command === 'rebase') {
-    await runRebaseCommand({ argv: argv.slice(1) });
-    return;
-  }
-
-  if (command === 'select') {
-    await runSelectCommand({ argv: argv.slice(1) });
-    return;
-  }
-
-  if (command === 'status') {
-    await runStatusCommand({ argv: argv.slice(1) });
-    return;
-  }
-
-  console.error(`Unknown command: ${command}`);
-  printHelp();
-  exit(1);
+  await commands[command]();
 }
+
+/* ────────────────────────────────────────────────────────── */
+/* Bootstrap                                                  */
+/* ────────────────────────────────────────────────────────── */
 
 main().catch((error: unknown) => {
   console.error(error);

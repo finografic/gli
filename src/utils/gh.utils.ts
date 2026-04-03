@@ -64,7 +64,7 @@ interface ReviewThreadsGraphqlResponse {
   };
 }
 
-export const assertGhAvailable = async (): Promise<void> => {
+export async function assertGhAvailable(): Promise<void> {
   try {
     await execAsync('gh auth status');
   } catch {
@@ -74,9 +74,9 @@ export const assertGhAvailable = async (): Promise<void> => {
         'Authenticate: gh auth login',
     );
   }
-};
+}
 
-const parsePrListJson = ({ output }: { output: string }): PrStatus[] => {
+function parsePrListJson({ output }: { output: string }): PrStatus[] {
   const parsed: unknown = JSON.parse(output);
   if (!Array.isArray(parsed)) {
     throw new Error('Unexpected output from `gh pr list` (expected JSON array).');
@@ -116,13 +116,13 @@ const parsePrListJson = ({ output }: { output: string }): PrStatus[] => {
       };
     })
     .filter((pr): pr is PrStatus => pr !== null);
-};
+}
 
-const extractOwnerAndNameFromPrUrl = ({
+function extractOwnerAndNameFromPrUrl({
   pullRequestUrl,
 }: {
   pullRequestUrl: string;
-}): { owner: string; name: string } | null => {
+}): { owner: string; name: string } | null {
   const match = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/\d+/.exec(pullRequestUrl);
 
   if (!match) return null;
@@ -131,13 +131,13 @@ const extractOwnerAndNameFromPrUrl = ({
     owner: match[1],
     name: match[2],
   };
-};
+}
 
-const fetchUnresolvedCommentsCountByPrNumber = async ({
+async function fetchUnresolvedCommentsCountByPrNumber({
   pullRequests,
 }: {
   pullRequests: PrStatus[];
-}): Promise<Map<number, number>> => {
+}): Promise<Map<number, number>> {
   if (pullRequests.length === 0) {
     return new Map();
   }
@@ -176,9 +176,9 @@ const fetchUnresolvedCommentsCountByPrNumber = async ({
   }
 
   return unresolvedCountByPullRequestNumber;
-};
+}
 
-export const fetchMyOpenPrs = async ({ repo }: { repo?: string } = {}): Promise<PrStatus[]> => {
+export async function fetchMyOpenPrs({ repo }: { repo?: string } = {}): Promise<PrStatus[]> {
   const repoFlag = repo ? ` --repo ${repo}` : '';
   const { stdout } = await execAsync(
     `gh pr list --author "@me" --state open --json number,title,headRefName,baseRefName,mergeStateStatus,mergeable,isDraft,updatedAt,url,statusCheckRollup,reviewDecision,latestReviews${repoFlag}`,
@@ -197,12 +197,12 @@ export const fetchMyOpenPrs = async ({ repo }: { repo?: string } = {}): Promise<
   } catch {
     return pullRequests;
   }
-};
+}
 
-export const fetchDefaultBranch = async (): Promise<string> => {
+export async function fetchDefaultBranch(): Promise<string> {
   const { stdout } = await execAsync('gh repo view --json defaultBranchRef --jq .defaultBranchRef.name');
   return stdout.trim();
-};
+}
 
 export interface RepoInfo {
   name: string;
@@ -218,10 +218,8 @@ export interface RepoSection {
   jiraConfig?: { baseUrl: string; issuePrefix?: string };
 }
 
-/**
- * Get current repository info (name, owner/name, url).
- */
-export const fetchRepoInfo = async ({ repo }: { repo?: string } = {}): Promise<RepoInfo> => {
+/** Get current repository info (name, owner/name, url). */
+export async function fetchRepoInfo({ repo }: { repo?: string } = {}): Promise<RepoInfo> {
   const repoArg = repo ? ` ${repo}` : '';
   const { stdout } = await execAsync(`gh repo view${repoArg} --json name,nameWithOwner,url`);
 
@@ -237,4 +235,4 @@ export const fetchRepoInfo = async ({ repo }: { repo?: string } = {}): Promise<R
     nameWithOwner: info.nameWithOwner,
     url: info.url,
   };
-};
+}
