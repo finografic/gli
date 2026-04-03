@@ -161,16 +161,16 @@ export function formatPrLine({
   const jiraForBranchLink = jiraConfig && isJiraLinksEnabled(jiraConfig) ? jiraConfig : undefined;
   const ticket = jiraForBranchLink
     ? getJiraTicketFromBranch({
-      branch: pr.headRefName,
-      issuePrefix: jiraForBranchLink.issuePrefix,
-    })
+        branch: pr.headRefName,
+        issuePrefix: jiraForBranchLink.issuePrefix,
+      })
     : null;
   const branch =
     ticket && jiraForBranchLink
       ? terminalLink({
-        url: `${jiraForBranchLink.baseUrl.replace(/\/$/, '')}/${ticket}`,
-        label: pc.cyan(pr.headRefName),
-      })
+          url: `${jiraForBranchLink.baseUrl.replace(/\/$/, '')}/${ticket}`,
+          label: pc.cyan(pr.headRefName),
+        })
       : pc.cyan(pr.headRefName);
 
   const buildDisplay = getBuildStatusDisplay({ pr });
