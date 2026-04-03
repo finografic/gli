@@ -1,11 +1,11 @@
 import { execSync } from 'node:child_process';
 import { exit } from 'node:process';
 import * as clack from '@clack/prompts';
+import { createFlowContext, promptConfirm } from 'core/flow/index.js';
 import pc from 'picocolors';
+import type { FlowContext } from 'core/flow/index.js';
 
 import { readConfig } from 'utils/config.utils.js';
-import type { FlowContext } from 'utils/flow.utils.js';
-import { createFlowContext, promptConfirm } from 'utils/flow.utils.js';
 import type { PrStatus, RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable, fetchDefaultBranch } from 'utils/gh.utils.js';
 import { printCommandHelp } from 'utils/help.utils.js';
