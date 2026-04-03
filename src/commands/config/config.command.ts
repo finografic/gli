@@ -14,7 +14,7 @@ interface RunConfigCommandParams {
   argv: string[];
 }
 
-const printHelp = () => {
+function printHelp(): void {
   printCommandHelp({
     command: 'gli config',
     description: 'Manage multi-repo configuration',
@@ -34,9 +34,9 @@ const printHelp = () => {
       { command: 'gli config edit', description: 'Edit config in $EDITOR / vim' },
     ],
   });
-};
+}
 
-const runAddRepo = async () => {
+async function runAddRepo(): Promise<void> {
   clack.intro('Add Repo');
 
   const currentPath = cwd();
@@ -83,9 +83,9 @@ const runAddRepo = async () => {
   clack.log.success(`Added ${pc.cyan(remote)}`);
   clack.log.info(`  ${pc.dim(tildeify(pathToUse))}`);
   clack.outro('Done');
-};
+}
 
-const runList = () => {
+function runList(): void {
   const repos = listRepos();
 
   if (repos.length === 0) {
@@ -100,9 +100,9 @@ const runList = () => {
   }
 
   clack.outro(`${repos.length} repo${repos.length === 1 ? '' : 's'} configured`);
-};
+}
 
-const runRemoveRepo = async () => {
+async function runRemoveRepo(): Promise<void> {
   const repos = listRepos();
 
   if (repos.length === 0) {
@@ -129,13 +129,13 @@ const runRemoveRepo = async () => {
   removeRepo({ remote: selected });
   clack.log.success(`Removed ${pc.bold(selected)}`);
   clack.outro('Done');
-};
+}
 
-const runPath = () => {
+function runPath(): void {
   console.log(getConfigFilePath());
-};
+}
 
-const runEdit = () => {
+function runEdit(): void {
   const configPath = getConfigFilePath();
   const editor = process.env['EDITOR'] || process.env['VISUAL'] || 'vim';
   const result = spawnSync(editor, [configPath], { stdio: 'inherit' });
@@ -143,9 +143,9 @@ const runEdit = () => {
     console.error(pc.red(`Failed to open editor "${editor}": ${result.error.message}`));
     process.exit(1);
   }
-};
+}
 
-export const runConfigCommand = async ({ argv }: RunConfigCommandParams) => {
+export async function runConfigCommand({ argv }: RunConfigCommandParams): Promise<void> {
   const [subcommand] = argv;
 
   if (!subcommand || subcommand === '--help' || subcommand === '-h') {
@@ -180,4 +180,4 @@ export const runConfigCommand = async ({ argv }: RunConfigCommandParams) => {
 
   console.error(`Unknown config subcommand: ${subcommand}`);
   printHelp();
-};
+}

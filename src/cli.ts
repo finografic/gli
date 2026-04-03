@@ -25,7 +25,7 @@ const getVersion = (): string => {
   }
 };
 
-const main = async () => {
+async function main(): Promise<void> {
   const [, , ...argv] = process.argv;
   const [command] = argv;
 
@@ -72,7 +72,7 @@ const main = async () => {
   console.error(`Unknown command: ${command}`);
   printHelp();
   exit(1);
-};
+}
 
 main().catch((error: unknown) => {
   console.error(error);

@@ -7,11 +7,11 @@ export function printHelp(): void {
   lines.push(`${pc.bold('gli')} - Git utilities for monitoring and managing PRs from the terminal`);
   lines.push('');
 
-  lines.push(pc.bold('USAGE'));
+  lines.push(pc.bold('USAGE')); // TODO: necessary?
   lines.push(`  ${pc.cyanBright('gli')} ${pc.dim(pc.cyan('<command>'))} [options]`);
   lines.push('');
 
-  lines.push(pc.bold('COMMANDS'));
+  lines.push(pc.bold('Commands'));
   const commands = [
     { name: 'live', desc: 'Live-updating PR status dashboard (⭐ FEATURE)' },
     { name: 'status', desc: 'Show merge status of your open PRs' },
@@ -27,12 +27,12 @@ export function printHelp(): void {
   }
   lines.push('');
 
-  lines.push(pc.bold('OPTIONS'));
+  lines.push(pc.bold('Options'));
   lines.push('  -h, --help       Show help for a command');
   lines.push('  -v, --version    Show version number');
   lines.push('');
 
-  lines.push(pc.bold('EXAMPLES'));
+  lines.push(pc.bold('Examples'));
   const examples = [
     { cmd: 'gli live', comment: 'Start live PR dashboard' },
     { cmd: 'gli status', comment: 'Snapshot of PR status (exits)' },
@@ -49,7 +49,7 @@ export function printHelp(): void {
   }
   lines.push('');
 
-  lines.push(pc.bold('GET HELP'));
+  lines.push(pc.bold('Show help'));
   lines.push(
     `  ${pc.cyanBright('gli')} ${pc.dim(pc.cyan('<command>'))} --help       ${
       pc.dim('# Show detailed help for a command')

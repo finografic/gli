@@ -146,13 +146,10 @@ export function formatPrLine(
     prNumWidth?: number;
     branchWidth?: number;
     titleWidth?: number;
-    /** Skip this many characters from the start of the title before truncating. */
     titleSliceStart?: number;
     buildWidth?: number;
     commentsWidth?: number;
-    /** Compact mode: hides title, shows only build icon, shows approval icon + count only. */
     compact?: boolean;
-    /** When set, the branch column becomes a clickable Jira link. */
     jiraConfig?: { baseUrl: string; issuePrefix?: string };
   },
 ): string {

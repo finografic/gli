@@ -165,7 +165,6 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
         isCompact = !isCompact;
         renderFromCache();
       } else if (key === KEYCODES.CTRL_C || key === KEYCODES.Q) {
-        // Ctrl+C or q — exit cleanly
         process.exit(0);
       }
     });
