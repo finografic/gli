@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
-
 import { runConfigCommand } from 'commands/config/index.js';
 import { runLiveCommand } from 'commands/live/index.js';
 import { runRebaseCommand } from 'commands/rebase/index.js';
@@ -29,12 +28,7 @@ async function main(): Promise<void> {
   const [, , ...argv] = process.argv;
   const [command] = argv;
 
-  if (
-    !command
-    || command === 'help'
-    || command === '--help'
-    || command === '-h'
-  ) {
+  if (!command || command === 'help' || command === '--help' || command === '-h') {
     printHelp();
     return;
   }

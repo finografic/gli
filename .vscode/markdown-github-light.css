@@ -44,8 +44,8 @@
 
 body {
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji";
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji';
   font-size: 16px;
   line-height: 1.5;
   color: var(--fg);
@@ -57,8 +57,8 @@ body {
 
 .markdown-body {
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji";
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji';
   font-size: 16px;
   line-height: 1.5;
   color: var(--fg);
@@ -67,13 +67,13 @@ body {
 
 .markdown-body::before {
   display: table;
-  content: "";
+  content: '';
 }
 
 .markdown-body::after {
   display: table;
   clear: both;
-  content: "";
+  content: '';
 }
 
 .markdown-body > *:first-child {
@@ -252,11 +252,11 @@ body {
   background-color: var(--bg);
 }
 
-.markdown-body img[align="right"] {
+.markdown-body img[align='right'] {
   padding-left: 20px;
 }
 
-.markdown-body img[align="left"] {
+.markdown-body img[align='left'] {
   padding-right: 20px;
 }
 
@@ -267,7 +267,7 @@ body {
   background-color: var(--code-inline-bg);
   color: var(--code-inline-fg);
   border-radius: 3px;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 }
 
 .markdown-body pre {
@@ -291,7 +291,7 @@ body {
   line-height: 1.45;
   background-color: var(--code-bg);
   border-radius: 3px;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 }
 
 .markdown-body pre code {
@@ -372,7 +372,7 @@ body {
   vertical-align: middle;
 }
 
-.markdown-body .task-list-item input[type="checkbox"] {
+.markdown-body .task-list-item input[type='checkbox'] {
   box-sizing: border-box;
   padding: 0;
 }

@@ -1,6 +1,5 @@
 import { spawnSync } from 'node:child_process';
 import { cwd } from 'node:process';
-
 import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 

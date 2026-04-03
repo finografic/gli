@@ -36,12 +36,14 @@ export function getBuildStatusDisplay({ pr }: { pr: PrStatus }): StatusDisplay {
     const conclusion = (check.conclusion ?? '').toUpperCase();
     const state = (check.state ?? '').toUpperCase();
 
-    return conclusion === 'FAILURE'
-      || conclusion === 'ERROR'
-      || conclusion === 'TIMED_OUT'
-      || conclusion === 'STARTUP_FAILURE'
-      || state === 'FAILURE'
-      || state === 'ERROR';
+    return (
+      conclusion === 'FAILURE' ||
+      conclusion === 'ERROR' ||
+      conclusion === 'TIMED_OUT' ||
+      conclusion === 'STARTUP_FAILURE' ||
+      state === 'FAILURE' ||
+      state === 'ERROR'
+    );
   });
 
   if (hasFailed) {
@@ -86,17 +88,15 @@ export function getApprovalStatusDisplay({ pr }: { pr: PrStatus }): StatusDispla
 /**
  * Slice, trim, and truncate a PR title for display.
  */
-export function truncatePrTitle(
-  {
-    title,
-    maxChars,
-    sliceStart = 0,
-  }: {
-    title: string;
-    maxChars: number;
-    sliceStart?: number;
-  },
-): string {
+export function truncatePrTitle({
+  title,
+  maxChars,
+  sliceStart = 0,
+}: {
+  title: string;
+  maxChars: number;
+  sliceStart?: number;
+}): string {
   let text = title.replace('  ', ' ').trim();
   if (sliceStart > 0) {
     text = text.slice(sliceStart).trim();
@@ -117,12 +117,14 @@ export function terminalLink({ url, label }: { url: string; label: string }): st
  * Matches the first occurrence of PROJECT-NUMBER (e.g. SBS-1234, JIRA-42).
  * Ignores common branch prefixes like build-, feature-, fix-, etc.
  */
-export function getJiraTicketFromBranch(
-  { branch, issuePrefix }: { branch: string; issuePrefix?: string },
-): string | null {
-  const pattern = issuePrefix
-    ? new RegExp(`(${issuePrefix}-\\d+)`, 'i')
-    : /([A-Z][A-Z0-9]+-\d+)/i;
+export function getJiraTicketFromBranch({
+  branch,
+  issuePrefix,
+}: {
+  branch: string;
+  issuePrefix?: string;
+}): string | null {
+  const pattern = issuePrefix ? new RegExp(`(${issuePrefix}-\\d+)`, 'i') : /([A-Z][A-Z0-9]+-\d+)/i;
   const match = pattern.exec(branch);
   return match?.[1]?.toUpperCase() ?? null;
 }
@@ -130,29 +132,27 @@ export function getJiraTicketFromBranch(
 /**
  * Format a single PR line for display with proper column alignment.
  */
-export function formatPrLine(
-  {
-    pr,
-    prNumWidth = 0,
-    branchWidth = 0,
-    titleWidth = 0,
-    titleSliceStart = 0,
-    buildWidth = 0,
-    commentsWidth = 0,
-    compact = false,
-    jiraConfig,
-  }: {
-    pr: PrStatus;
-    prNumWidth?: number;
-    branchWidth?: number;
-    titleWidth?: number;
-    titleSliceStart?: number;
-    buildWidth?: number;
-    commentsWidth?: number;
-    compact?: boolean;
-    jiraConfig?: { baseUrl: string; issuePrefix?: string };
-  },
-): string {
+export function formatPrLine({
+  pr,
+  prNumWidth = 0,
+  branchWidth = 0,
+  titleWidth = 0,
+  titleSliceStart = 0,
+  buildWidth = 0,
+  commentsWidth = 0,
+  compact = false,
+  jiraConfig,
+}: {
+  pr: PrStatus;
+  prNumWidth?: number;
+  branchWidth?: number;
+  titleWidth?: number;
+  titleSliceStart?: number;
+  buildWidth?: number;
+  commentsWidth?: number;
+  compact?: boolean;
+  jiraConfig?: { baseUrl: string; issuePrefix?: string };
+}): string {
   // PR number with "PR#" prefix in magenta (clickable)
   const prNumText = `PR#${pr.number}`;
   const prNumber = terminalLink({ url: pr.url, label: pc.magenta(prNumText) });
@@ -165,12 +165,13 @@ export function formatPrLine(
       issuePrefix: jiraForBranchLink.issuePrefix,
     })
     : null;
-  const branch = ticket && jiraForBranchLink
-    ? terminalLink({
-      url: `${jiraForBranchLink.baseUrl.replace(/\/$/, '')}/${ticket}`,
-      label: pc.cyan(pr.headRefName),
-    })
-    : pc.cyan(pr.headRefName);
+  const branch =
+    ticket && jiraForBranchLink
+      ? terminalLink({
+        url: `${jiraForBranchLink.baseUrl.replace(/\/$/, '')}/${ticket}`,
+        label: pc.cyan(pr.headRefName),
+      })
+      : pc.cyan(pr.headRefName);
 
   const buildDisplay = getBuildStatusDisplay({ pr });
   const approvalDisplay = getApprovalStatusDisplay({ pr });
@@ -179,12 +180,8 @@ export function formatPrLine(
   // Shared padding
   const prNumPadding = prNumWidth > 0 ? prNumWidth - prNumText.length : 0;
   const branchPadding = branchWidth > 0 ? branchWidth - pr.headRefName.length : 0;
-  const commentsPadding = commentsWidth > 0
-    ? commentsWidth - unresolvedCommentsBadge.length
-    : 0;
-  const commentsPart = commentsWidth > 0
-    ? `  ${unresolvedCommentsBadge}${' '.repeat(commentsPadding)}`
-    : '';
+  const commentsPadding = commentsWidth > 0 ? commentsWidth - unresolvedCommentsBadge.length : 0;
+  const commentsPart = commentsWidth > 0 ? `  ${unresolvedCommentsBadge}${' '.repeat(commentsPadding)}` : '';
 
   if (compact) {
     const buildText = `${buildDisplay.symbol} ${buildDisplay.label}`;
@@ -192,9 +189,9 @@ export function formatPrLine(
     const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
     const approvalStatusText = approvalDisplay.color(approvalText);
     const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
-    return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${
-      ' '.repeat(branchPadding)
-    }  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${commentsPart}`;
+    return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${' '.repeat(
+      branchPadding,
+    )}  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${commentsPart}`;
   }
 
   // Full mode
@@ -215,11 +212,9 @@ export function formatPrLine(
     titlePart = `  ${pc.white(truncated)}${' '.repeat(titleWidth - truncated.length)}`;
   }
 
-  return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${
-    ' '.repeat(branchPadding)
-  }${titlePart}  ${buildStatusText}${
-    ' '.repeat(buildPadding)
-  }  ${approvalStatusText}${commentsPart}`;
+  return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${' '.repeat(
+    branchPadding,
+  )}${titlePart}  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${commentsPart}`;
 }
 
 interface FormatPrLinesParams {
@@ -242,41 +237,37 @@ interface FormatPrLinesParams {
  * Format multiple PR lines with aligned columns.
  * Pass pre-computed widths to align columns across multiple repos.
  */
-export function formatPrLines(
-  {
-    prs,
-    showTitle = false,
-    titleMaxChars = 40,
-    titleSliceStart = 0,
-    prNumWidth: prNumWidthOverride,
-    branchWidth: branchWidthOverride,
-    buildWidth: buildWidthOverride,
-    commentsWidth: commentsWidthOverride,
-    compact = false,
-    jiraConfig,
-  }: FormatPrLinesParams,
-): string[] {
+export function formatPrLines({
+  prs,
+  showTitle = false,
+  titleMaxChars = 40,
+  titleSliceStart = 0,
+  prNumWidth: prNumWidthOverride,
+  branchWidth: branchWidthOverride,
+  buildWidth: buildWidthOverride,
+  commentsWidth: commentsWidthOverride,
+  compact = false,
+  jiraConfig,
+}: FormatPrLinesParams): string[] {
   if (prs.length === 0) return [];
 
   // Use provided widths or compute from this batch
-  const prNumWidth = prNumWidthOverride
-    ?? Math.max(...prs.map((pr) => `PR#${pr.number}`.length));
-  const branchWidth = branchWidthOverride
-    ?? Math.max(...prs.map((pr) => pr.headRefName.length));
+  const prNumWidth = prNumWidthOverride ?? Math.max(...prs.map((pr) => `PR#${pr.number}`.length));
+  const branchWidth = branchWidthOverride ?? Math.max(...prs.map((pr) => pr.headRefName.length));
   // Compact mode never shows title; full mode respects showTitle
-  const titleWidth = !compact && showTitle
-    ? Math.min(titleMaxChars, Math.max(...prs.map((pr) => pr.title.length)))
-    : 0;
-  const buildWidth = buildWidthOverride
-    ?? Math.max(
+  const titleWidth =
+    !compact && showTitle ? Math.min(titleMaxChars, Math.max(...prs.map((pr) => pr.title.length))) : 0;
+  const buildWidth =
+    buildWidthOverride ??
+    Math.max(
       ...prs.map((pr) => {
         const d = getBuildStatusDisplay({ pr });
         return `${d.symbol} ${d.label}`.length;
       }),
     );
 
-  const commentsWidth = commentsWidthOverride
-    ?? Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length));
+  const commentsWidth =
+    commentsWidthOverride ?? Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length));
 
   return prs.map((pr) =>
     formatPrLine({
@@ -289,7 +280,7 @@ export function formatPrLines(
       commentsWidth,
       compact,
       jiraConfig,
-    })
+    }),
   );
 }
 
@@ -323,17 +314,15 @@ export function computeColumnWidths({ prs }: { prs: PrStatus[] }): {
  * Format PR options for a clack select prompt.
  * Each option has the branch name (aligned, cyan) followed by the truncated title (dim).
  */
-export function formatSelectOptions(
-  {
-    prs,
-    titleMaxChars = 40,
-    titleSliceStart = 0,
-  }: {
-    prs: PrStatus[];
-    titleMaxChars?: number;
-    titleSliceStart?: number;
-  },
-): Array<{ value: string; label: string }> {
+export function formatSelectOptions({
+  prs,
+  titleMaxChars = 40,
+  titleSliceStart = 0,
+}: {
+  prs: PrStatus[];
+  titleMaxChars?: number;
+  titleSliceStart?: number;
+}): Array<{ value: string; label: string }> {
   const branchWidth = Math.max(...prs.map((pr) => pr.headRefName.length));
 
   return prs.map((pr) => {

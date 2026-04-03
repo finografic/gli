@@ -38,11 +38,7 @@ export function readConfig(): GliConfiguration {
 
 /** Narrow unknown → GliConfiguration (minimal structural check). */
 function isValidConfig(value: unknown): value is GliConfiguration {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && Array.isArray((value as GliConfiguration).repos)
-  );
+  return typeof value === 'object' && value !== null && Array.isArray((value as GliConfiguration).repos);
 }
 
 export function getConfigFilePath(): string {

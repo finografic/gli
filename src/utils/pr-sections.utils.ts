@@ -40,18 +40,14 @@ export function renderDisplay({
   const now = new Date();
   lines.push('');
   lines.push(
-    `${pc.bold('📊 PRs LIVE Status')} ${
-      pc.dim(
-        `- refreshed ${
-          now.toLocaleTimeString('en-US', {
-            hour12: false,
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })
-        }`,
-      )
-    }${compact ? `  ${pc.dim('[compact]')}` : ''}`,
+    `${pc.bold('📊 PRs LIVE Status')} ${pc.dim(
+      `- refreshed ${now.toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })}`,
+    )}${compact ? `  ${pc.dim('[compact]')}` : ''}`,
   );
 
   lines.push('');
@@ -98,9 +94,7 @@ export function renderDisplay({
     lines.push('');
   }
 
-  lines.push(
-    `  ${pc.dim(tildeify(getConfigFilePath()))}`,
-  );
+  lines.push(`  ${pc.dim(tildeify(getConfigFilePath()))}`);
 
   lines.push('');
 
@@ -124,8 +118,9 @@ export async function fetchPrSections(): Promise<RepoSection[]> {
   const config = readConfig();
 
   if (config.repos.length > 0) {
-    const globalJira: JiraConfig | undefined = config.jira
-      ?? (DEFAULT_JIRA_BASE_URL
+    const globalJira: JiraConfig | undefined =
+      config.jira ??
+      (DEFAULT_JIRA_BASE_URL
         ? { baseUrl: DEFAULT_JIRA_BASE_URL, issuePrefix: DEFAULT_JIRA_ISSUE_PREFIX }
         : undefined);
 

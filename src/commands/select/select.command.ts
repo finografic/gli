@@ -1,7 +1,6 @@
 import { execSync } from 'node:child_process';
 import { cwd } from 'node:process';
 import { exit } from 'node:process';
-
 import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 
@@ -39,10 +38,7 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
   try {
     await assertGhAvailable();
   } catch (error: unknown) {
-    console.error(
-      pc.red('Error:'),
-      error instanceof Error ? error.message : 'GitHub CLI not available',
-    );
+    console.error(pc.red('Error:'), error instanceof Error ? error.message : 'GitHub CLI not available');
     exit(1);
   }
 
@@ -50,19 +46,15 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
 
   // Match cwd against a configured repo localPath (support being in a subdirectory)
   const currentDir = cwd();
-  const matchedRepo = config.repos.find((repo) =>
-    currentDir === repo.localPath || currentDir.startsWith(`${repo.localPath}/`)
+  const matchedRepo = config.repos.find(
+    (repo) => currentDir === repo.localPath || currentDir.startsWith(`${repo.localPath}/`),
   );
 
   if (config.repos.length > 0 && matchedRepo === undefined) {
     console.log('');
+    console.error(pc.red('✗ Current directory is not a configured repo path.'));
     console.error(
-      pc.red('✗ Current directory is not a configured repo path.'),
-    );
-    console.error(
-      pc.dim(
-        `  Run ${pc.white('gli select')} from within one of your configured repo directories.`,
-      ),
+      pc.dim(`  Run ${pc.white('gli select')} from within one of your configured repo directories.`),
     );
     console.log('');
     exit(1);
@@ -73,20 +65,17 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
   let pullRequests: PrStatus[];
   const cache = readCache();
   if (cache !== null && isCacheFresh({ cache })) {
-    pullRequests = matchedRepo !== undefined
-      ? cache.sections
-        .filter((s) => s.repoInfo?.url === matchedRepo.remote)
-        .flatMap((s) => s.pullRequests)
-      : cache.sections.flatMap((s) => s.pullRequests);
+    pullRequests =
+      matchedRepo !== undefined
+        ? cache.sections.filter((s) => s.repoInfo?.url === matchedRepo.remote).flatMap((s) => s.pullRequests)
+        : cache.sections.flatMap((s) => s.pullRequests);
   } else {
     try {
       pullRequests = await fetchMyOpenPrs(
         matchedRepo !== undefined ? { repo: matchedRepo.remote } : undefined,
       );
     } catch (error: unknown) {
-      console.error(
-        `\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`,
-      );
+      console.error(`\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`);
       exit(1);
     }
   }
@@ -95,9 +84,7 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
     console.log('');
     console.log(
       pc.yellow(
-        `No open PRs found for your account${
-          matchedRepo !== undefined ? ` in ${matchedRepo.remote}` : ''
-        }.`,
+        `No open PRs found for your account${matchedRepo !== undefined ? ` in ${matchedRepo.remote}` : ''}.`,
       ),
     );
     console.log('');

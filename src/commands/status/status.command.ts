@@ -1,15 +1,11 @@
 import { exit } from 'node:process';
-
 import pc from 'picocolors';
 
 import { readConfig } from 'utils/config.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
 import { printCommandHelp } from 'utils/help.utils.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
-import {
-  DEFAULT_LIVE_INTERVAL_SECONDS,
-  DEFAULT_PR_TITLE_MAX_CHARS,
-} from 'config/defaults.constants.js';
+import { DEFAULT_LIVE_INTERVAL_SECONDS, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
 import { DEFAULT_PR_TITLE_SLICE_START } from 'config/ui.constants.js';
 
 interface RunStatusCommandParams {
@@ -49,10 +45,7 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
   try {
     await assertGhAvailable();
   } catch (error: unknown) {
-    console.error(
-      pc.red('Error:'),
-      error instanceof Error ? error.message : 'GitHub CLI not available',
-    );
+    console.error(pc.red('Error:'), error instanceof Error ? error.message : 'GitHub CLI not available');
     exit(1);
   }
 
@@ -78,9 +71,7 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
 
     console.log(output);
   } catch (error: unknown) {
-    console.error(
-      `\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`,
-    );
+    console.error(`\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`);
     exit(1);
   }
 }

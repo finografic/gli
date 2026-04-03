@@ -69,9 +69,9 @@ export const assertGhAvailable = async (): Promise<void> => {
     await execAsync('gh auth status');
   } catch {
     throw new Error(
-      'GitHub CLI (gh) is not installed or not authenticated.\n'
-        + 'Install: https://cli.github.com\n'
-        + 'Authenticate: gh auth login',
+      'GitHub CLI (gh) is not installed or not authenticated.\n' +
+        'Install: https://cli.github.com\n' +
+        'Authenticate: gh auth login',
     );
   }
 };
@@ -86,15 +86,15 @@ const parsePrListJson = ({ output }: { output: string }): PrStatus[] => {
     .map((item): PrStatus | null => {
       const maybeItem = item as Partial<GhPrListItem>;
       if (
-        typeof maybeItem.number !== 'number'
-        || typeof maybeItem.title !== 'string'
-        || typeof maybeItem.headRefName !== 'string'
-        || typeof maybeItem.baseRefName !== 'string'
-        || typeof maybeItem.mergeStateStatus !== 'string'
-        || typeof maybeItem.mergeable !== 'string'
-        || typeof maybeItem.isDraft !== 'boolean'
-        || typeof maybeItem.updatedAt !== 'string'
-        || typeof maybeItem.url !== 'string'
+        typeof maybeItem.number !== 'number' ||
+        typeof maybeItem.title !== 'string' ||
+        typeof maybeItem.headRefName !== 'string' ||
+        typeof maybeItem.baseRefName !== 'string' ||
+        typeof maybeItem.mergeStateStatus !== 'string' ||
+        typeof maybeItem.mergeable !== 'string' ||
+        typeof maybeItem.isDraft !== 'boolean' ||
+        typeof maybeItem.updatedAt !== 'string' ||
+        typeof maybeItem.url !== 'string'
       ) {
         return null;
       }
@@ -109,9 +109,7 @@ const parsePrListJson = ({ output }: { output: string }): PrStatus[] => {
         isDraft: maybeItem.isDraft,
         updatedAt: maybeItem.updatedAt,
         url: maybeItem.url,
-        statusCheckRollup: Array.isArray(maybeItem.statusCheckRollup)
-          ? maybeItem.statusCheckRollup
-          : [],
+        statusCheckRollup: Array.isArray(maybeItem.statusCheckRollup) ? maybeItem.statusCheckRollup : [],
         reviewDecision: maybeItem.reviewDecision ?? '',
         latestReviews: Array.isArray(maybeItem.latestReviews) ? maybeItem.latestReviews : [],
         unresolvedCommentsCount: 0,
@@ -202,9 +200,7 @@ export const fetchMyOpenPrs = async ({ repo }: { repo?: string } = {}): Promise<
 };
 
 export const fetchDefaultBranch = async (): Promise<string> => {
-  const { stdout } = await execAsync(
-    'gh repo view --json defaultBranchRef --jq .defaultBranchRef.name',
-  );
+  const { stdout } = await execAsync('gh repo view --json defaultBranchRef --jq .defaultBranchRef.name');
   return stdout.trim();
 };
 
@@ -227,9 +223,7 @@ export interface RepoSection {
  */
 export const fetchRepoInfo = async ({ repo }: { repo?: string } = {}): Promise<RepoInfo> => {
   const repoArg = repo ? ` ${repo}` : '';
-  const { stdout } = await execAsync(
-    `gh repo view${repoArg} --json name,nameWithOwner,url`,
-  );
+  const { stdout } = await execAsync(`gh repo view${repoArg} --json name,nameWithOwner,url`);
 
   const parsed: unknown = JSON.parse(stdout);
   const info = parsed as Partial<RepoInfo>;

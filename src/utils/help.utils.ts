@@ -67,9 +67,7 @@ export function printCommandHelp(options: CommandHelpOptions): void {
     const maxNameLength = Math.max(...subcommands.map((s) => s.name.length));
     for (const sub of subcommands) {
       lines.push(
-        `  ${pc.cyan(sub.name)}${
-          ' '.repeat(maxNameLength - sub.name.length + 4)
-        }${sub.description}`,
+        `  ${pc.cyan(sub.name)}${' '.repeat(maxNameLength - sub.name.length + 4)}${sub.description}`,
       );
     }
     lines.push('');

@@ -27,12 +27,13 @@ export function readCache(): PrCache | null {
   }
 }
 
-export function isCacheFresh(
-  { cache, maxAgeSeconds = DEFAULT_CACHE_MAX_AGE_SECONDS }: {
-    cache: PrCache;
-    maxAgeSeconds?: number;
-  },
-): boolean {
+export function isCacheFresh({
+  cache,
+  maxAgeSeconds = DEFAULT_CACHE_MAX_AGE_SECONDS,
+}: {
+  cache: PrCache;
+  maxAgeSeconds?: number;
+}): boolean {
   const ageMs = Date.now() - new Date(cache.updatedAt).getTime();
   return ageMs < maxAgeSeconds * 1000;
 }

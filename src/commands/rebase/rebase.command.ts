@@ -1,6 +1,5 @@
 import { execSync } from 'node:child_process';
 import { exit } from 'node:process';
-
 import * as clack from '@clack/prompts';
 import pc from 'picocolors';
 
@@ -74,9 +73,7 @@ const rebaseBranch = async ({
   if (dryRun) {
     const mode = squash ? 'squash and rebase' : interactive ? 'interactively rebase' : 'rebase';
     console.log(
-      `  ${pc.dim('[dry-run]')} Would ${mode} ${pc.bold(branch)} onto ${
-        pc.bold(`origin/${defaultBranch}`)
-      }`,
+      `  ${pc.dim('[dry-run]')} Would ${mode} ${pc.bold(branch)} onto ${pc.bold(`origin/${defaultBranch}`)}`,
     );
     return { success: true, aborted: false };
   }
@@ -97,9 +94,7 @@ const rebaseBranch = async ({
     execSync(`git checkout ${branch}`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
   } catch (error: unknown) {
     console.log(`  ${pc.red('✗')} Checkout failed`);
-    console.log(
-      `    ${pc.red(error instanceof Error ? error.message : `Failed to checkout ${branch}`)}`,
-    );
+    console.log(`    ${pc.red(error instanceof Error ? error.message : `Failed to checkout ${branch}`)}`);
     return { success: false, aborted: false };
   }
 
@@ -282,16 +277,12 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
   try {
     await assertGhAvailable();
   } catch (error: unknown) {
-    console.log(
-      `  ${pc.red('✗')} ${error instanceof Error ? error.message : 'GitHub CLI not available'}`,
-    );
+    console.log(`  ${pc.red('✗')} ${error instanceof Error ? error.message : 'GitHub CLI not available'}`);
     exit(1);
   }
 
   if (!dryRun && hasUncommittedChanges()) {
-    console.log(
-      `  ${pc.red('✗')} You have uncommitted changes. Please commit or stash them first.`,
-    );
+    console.log(`  ${pc.red('✗')} You have uncommitted changes. Please commit or stash them first.`);
     console.log('');
     exit(1);
   }
@@ -304,16 +295,12 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
     const allSections = await fetchPrSections();
     const cwd = process.cwd();
     const config = readConfig();
-    const matchedRepo = config.repos.find((r) =>
-      cwd === r.localPath || cwd.startsWith(`${r.localPath}/`)
-    );
+    const matchedRepo = config.repos.find((r) => cwd === r.localPath || cwd.startsWith(`${r.localPath}/`));
     let sections: RepoSection[];
     if (matchedRepo) {
       const normalise = (u: string) => u.replace(/\.git$/, '').replace(/\/+$/, '');
       const remoteKey = normalise(matchedRepo.remote);
-      sections = allSections.filter(
-        (s) => s.repoInfo != null && normalise(s.repoInfo.url) === remoteKey,
-      );
+      sections = allSections.filter((s) => s.repoInfo != null && normalise(s.repoInfo.url) === remoteKey);
       if (sections.length === 0) sections = allSections;
     } else {
       sections = allSections;
@@ -423,9 +410,7 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
     const progressLabel = toRebase.length > 1 ? `[${i + 1}/${toRebase.length}] ` : '';
 
     console.log(
-      `${progressLabel}${pc.bold('Rebasing')} ${pc.cyan(pr.headRefName)} ${
-        pc.dim(`(#${pr.number})`)
-      }`,
+      `${progressLabel}${pc.bold('Rebasing')} ${pc.cyan(pr.headRefName)} ${pc.dim(`(#${pr.number})`)}`,
     );
     console.log('');
 
@@ -511,9 +496,7 @@ export const runRebaseCommand = async ({ argv }: RunRebaseCommandParams) => {
       } would be rebased`,
     );
   } else if (failed === 0) {
-    console.log(
-      `  ${pc.green('✓')} Rebased ${succeeded} branch${succeeded === 1 ? '' : 'es'} successfully`,
-    );
+    console.log(`  ${pc.green('✓')} Rebased ${succeeded} branch${succeeded === 1 ? '' : 'es'} successfully`);
   } else {
     console.log(
       `  ${pc.dim('Result:')} ${pc.green(`${succeeded} succeeded`)}, ${pc.red(`${failed} failed`)}`,

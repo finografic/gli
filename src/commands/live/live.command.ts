@@ -7,10 +7,7 @@ import type { RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
 import { printCommandHelp } from 'utils/help.utils.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
-import {
-  DEFAULT_LIVE_INTERVAL_SECONDS,
-  DEFAULT_PR_TITLE_MAX_CHARS,
-} from 'config/defaults.constants.js';
+import { DEFAULT_LIVE_INTERVAL_SECONDS, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
 import { KEYCODES } from 'config/keycodes.constants';
 import {
   COMPACT_TOGGLE_KEY,
@@ -74,9 +71,7 @@ async function fetchAndDisplay(): Promise<void> {
 
     logUpdate(output);
   } catch (error: unknown) {
-    logUpdate(
-      `\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`,
-    );
+    logUpdate(`\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`);
   }
 }
 
@@ -113,8 +108,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
       examples: [
         {
           command: 'gli live',
-          description:
-            `Start live dashboard (refreshes every ${DEFAULT_LIVE_INTERVAL_SECONDS}s by default)`,
+          description: `Start live dashboard (refreshes every ${DEFAULT_LIVE_INTERVAL_SECONDS}s by default)`,
         },
         {
           command: 'gli config edit',
@@ -143,10 +137,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
   try {
     await assertGhAvailable();
   } catch (error: unknown) {
-    console.error(
-      pc.red('Error:'),
-      error instanceof Error ? error.message : 'GitHub CLI not available',
-    );
+    console.error(pc.red('Error:'), error instanceof Error ? error.message : 'GitHub CLI not available');
     process.exit(1);
   }
 
