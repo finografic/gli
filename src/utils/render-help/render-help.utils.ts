@@ -1,6 +1,5 @@
 import pc from 'picocolors';
-
-import type { HelpConfig } from 'types/help.types.js';
+import type { HelpConfig } from './help.types.js';
 
 function colorizeArgs(str: string): string {
   return str.replace(/<[^>]+>/g, (m) => pc.dim(pc.cyan(m)));

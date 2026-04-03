@@ -10,7 +10,7 @@ import { runRebaseCommand } from 'commands/rebase/index.js';
 import { runSelectCommand } from 'commands/select/index.js';
 import { runStatusCommand } from 'commands/status/index.js';
 
-import { renderHelp } from 'utils/render-help.utils.js';
+import { renderHelp } from 'utils/render-help/index.js';
 import { cliHelp } from './cli.help.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

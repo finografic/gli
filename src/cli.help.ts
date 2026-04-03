@@ -1,4 +1,4 @@
-import type { HelpConfig } from 'types/help.types.js';
+import type { HelpConfig } from 'utils/render-help/index.js';
 
 export const cliHelp: HelpConfig = {
   main: {
