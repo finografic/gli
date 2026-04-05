@@ -1,9 +1,4 @@
 {
-  "recommendations": [
-    "davidanson.vscode-markdownlint",
-    "dbaeumer.vscode-eslint",
-    "yzhang.markdown-all-in-one",
-    "oxc.oxc-vscode"
-  ],
+  "recommendations": ["davidanson.vscode-markdownlint", "dbaeumer.vscode-eslint", "oxc.oxc-vscode"],
   "unwantedRecommendations": ["esbenp.prettier-vscode"]
 }

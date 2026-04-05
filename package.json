@@ -2,7 +2,7 @@
   "name": "@finografic/gli",
   "type": "module",
   "version": "1.16.1",
-  "description": "GLI - Git CLI utils & PR live dashboard.",
+  "description": "Git CLI, Live PR Dashboard",
   "homepage": "https://github.com/finografic/gli",
   "repository": {
     "type": "git",
@@ -69,7 +69,6 @@
     "update.oxfmt-config": "pnpm update @finografic/oxfmt-config --latest && pnpm update oxfmt --latest",
     "upgrade.deps.all": "pnpm update --latest",
     "·········· UTILS": "·····················································",
-    "deprecate.git-cli": "tsx scripts/deprecate-git-cli.ts",
     "tsc.debug": "tsc --pretty --project tsconfig.json",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "prepack": "pnpm build",
