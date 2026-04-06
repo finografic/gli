@@ -1,9 +1,9 @@
 import { exit } from 'node:process';
+import { renderCommandHelp } from 'core/render-help/index.js';
 import pc from 'picocolors';
 
 import { readConfig } from 'utils/config.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
-import { renderCommandHelp } from 'core/render-help/index.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
 import { DEFAULT_LIVE_INTERVAL_SECONDS, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
 import { DEFAULT_PR_TITLE_SLICE_START } from 'config/ui.constants.js';

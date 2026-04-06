@@ -2,13 +2,13 @@ import { execSync } from 'node:child_process';
 import { exit } from 'node:process';
 import * as clack from '@clack/prompts';
 import { createFlowContext, promptConfirm } from 'core/flow/index.js';
+import { renderCommandHelp } from 'core/render-help/index.js';
 import pc from 'picocolors';
 import type { FlowContext } from 'core/flow/index.js';
 
 import { readConfig } from 'utils/config.utils.js';
 import type { PrStatus, RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable, fetchDefaultBranch } from 'utils/gh.utils.js';
-import { renderCommandHelp } from 'core/render-help/index.js';
 import { formatPrLines } from 'utils/pr-display.utils.js';
 import { fetchPrSections } from 'utils/pr-sections.utils.js';
 

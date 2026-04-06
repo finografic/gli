@@ -2,13 +2,13 @@ import { execSync } from 'node:child_process';
 import { cwd } from 'node:process';
 import { exit } from 'node:process';
 import * as clack from '@clack/prompts';
+import { renderCommandHelp } from 'core/render-help/index.js';
 import pc from 'picocolors';
 
 import { isCacheFresh, readCache } from 'utils/cache.utils.js';
 import { readConfig } from 'utils/config.utils.js';
 import type { PrStatus } from 'utils/gh.utils.js';
 import { assertGhAvailable, fetchMyOpenPrs } from 'utils/gh.utils.js';
-import { renderCommandHelp } from 'core/render-help/index.js';
 import { formatPrLines, formatSelectOptions } from 'utils/pr-display.utils.js';
 
 interface RunSelectCommandParams {

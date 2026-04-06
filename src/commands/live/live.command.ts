@@ -1,3 +1,4 @@
+import { renderCommandHelp } from 'core/render-help/index.js';
 import logUpdate from 'log-update';
 import pc from 'picocolors';
 
@@ -5,7 +6,6 @@ import { writeCache } from 'utils/cache.utils.js';
 import { readConfig } from 'utils/config.utils.js';
 import type { RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
-import { renderCommandHelp } from 'core/render-help/index.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
 import { DEFAULT_LIVE_INTERVAL_SECONDS, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
 import { KEYCODES } from 'config/keycodes.constants';
