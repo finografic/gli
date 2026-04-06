@@ -118,7 +118,7 @@ gli config edit      # Open config in $EDITOR
 pnpm install        # Install dependencies (sets up git hooks)
 pnpm dev            # Dev mode
 pnpm build          # Build
-pnpm test.run       # Tests
+pnpm test:run       # Tests
 pnpm lint           # Lint
 ```
 
