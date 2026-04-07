@@ -1,4 +1,4 @@
-# 💻 @finografic/gli - Git CLI, Live PR Dashboard
+# 💻 @finografic/gli - git CLI, Live PR dashboard
 
 > Git utilities for monitoring and managing PRs from the terminal. Built on the GitHub CLI (`gh`).
 
