@@ -116,14 +116,13 @@ export function renderDisplay({
  */
 export async function fetchPrSections(): Promise<RepoSection[]> {
   const config = readConfig();
+  const globalJira: JiraConfig | undefined =
+    config.jira ??
+    (DEFAULT_JIRA_BASE_URL
+      ? { baseUrl: DEFAULT_JIRA_BASE_URL, issuePrefix: DEFAULT_JIRA_ISSUE_PREFIX }
+      : undefined);
 
   if (config.repos.length > 0) {
-    const globalJira: JiraConfig | undefined =
-      config.jira ??
-      (DEFAULT_JIRA_BASE_URL
-        ? { baseUrl: DEFAULT_JIRA_BASE_URL, issuePrefix: DEFAULT_JIRA_ISSUE_PREFIX }
-        : undefined);
-
     return Promise.all(
       config.repos.map(async (repo) => {
         try {
@@ -156,5 +155,5 @@ export async function fetchPrSections(): Promise<RepoSection[]> {
   const allPrs = await fetchMyOpenPrs();
   const pullRequests = allPrs.filter((pr) => !pr.isDraft);
 
-  return [{ repoInfo, pullRequests }];
+  return [{ repoInfo, pullRequests, jiraConfig: globalJira }];
 }

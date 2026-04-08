@@ -67,6 +67,7 @@ async function fetchAndDisplay(): Promise<void> {
       liveInterval,
       isLive: true,
       compact: isCompact,
+      jiraConfig: config.jira,
     });
 
     logUpdate(output);

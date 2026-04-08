@@ -67,6 +67,7 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
       liveInterval,
       isLive: false,
       compact,
+      jiraConfig: config.jira,
     });
 
     console.log(output);
