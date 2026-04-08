@@ -92,7 +92,7 @@ export default defineConfig([
       parser: markdownlintParser,
     },
     plugins: {
-      markdownlint: markdownlintPlugin as Linter.Processor,
+      'markdownlint': markdownlintPlugin as Linter.Processor,
       '@stylistic': stylistic,
     },
     rules: {

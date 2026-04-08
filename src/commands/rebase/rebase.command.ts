@@ -190,11 +190,11 @@ async function rebaseBranch({
 export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   const flow = createFlowContext(argv, {
     'dry-run': { type: 'boolean' },
-    all: { type: 'boolean' },
-    interactive: { alias: 'i', type: 'boolean' },
-    squash: { alias: 's', type: 'boolean' },
-    stay: { type: 'boolean' },
-    y: { type: 'boolean' },
+    'all': { type: 'boolean' },
+    'interactive': { alias: 'i', type: 'boolean' },
+    'squash': { alias: 's', type: 'boolean' },
+    'stay': { type: 'boolean' },
+    'y': { type: 'boolean' },
   });
 
   const dryRun = Boolean(flow.flags['dry-run']);
