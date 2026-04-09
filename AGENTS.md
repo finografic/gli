@@ -21,7 +21,7 @@ Follow general TypeScript, ESLint, and naming conventions from prior context.
 
 Project-specific rules live in `.github/instructions/project/**/*.instructions.md`.
 
-<!-- NOTE: CLI package (`genx:type:cli` keyword in package.json) only -->
+<!-- NOTE: @finografic/gli - CLI package (`genx:type:cli` keyword in package.json) only -->
 
 - This is a **standalone installable package** (`@finografic/gli`), not a monorepo workspace member.
 - Published to GitHub Packages (`https://npm.pkg.github.com`).
