@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { cwd } from 'node:process';
 import { renderCommandHelp } from '@finografic/cli-kit/render-help';
 import * as clack from '@clack/prompts';
+import { configHelp } from 'commands/config/config.help.js';
 import pc from 'picocolors';
 
 import { getConfigFilePath, tildeify } from 'utils/config.utils.js';
@@ -12,28 +13,6 @@ import { GITHUB_URL_PATTERN } from 'config/defaults.constants.js';
 
 interface RunConfigCommandParams {
   argv: string[];
-}
-
-function printHelp(): void {
-  renderCommandHelp({
-    command: 'gli config',
-    description: 'Manage multi-repo configuration',
-    usage: 'gli config <subcommand>',
-    subcommands: [
-      { name: 'add', description: 'Add a repository to the config' },
-      { name: 'list', description: 'List all configured repositories' },
-      { name: 'remove', description: 'Remove a repository from the config' },
-      { name: 'path', description: 'Show the config file path' },
-      { name: 'edit', description: 'Open config file in $EDITOR' },
-    ],
-    examples: [
-      { command: 'gli config add', description: 'Add current directory' },
-      { command: 'gli config list', description: 'Show all repos' },
-      { command: 'gli config remove', description: 'Remove a repo' },
-      { command: 'gli config path', description: 'Show config file location' },
-      { command: 'gli config edit', description: 'Edit config in $EDITOR / vim' },
-    ],
-  });
 }
 
 async function runAddRepo(): Promise<void> {
@@ -149,7 +128,7 @@ export async function runConfigCommand({ argv }: RunConfigCommandParams): Promis
   const [subcommand] = argv;
 
   if (!subcommand || subcommand === '--help' || subcommand === '-h') {
-    printHelp();
+    renderCommandHelp(configHelp);
     return;
   }
 
@@ -179,5 +158,5 @@ export async function runConfigCommand({ argv }: RunConfigCommandParams): Promis
   }
 
   console.error(`Unknown config subcommand: ${subcommand}`);
-  printHelp();
+  renderCommandHelp(configHelp);
 }

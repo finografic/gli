@@ -3,6 +3,7 @@ import { cwd } from 'node:process';
 import { exit } from 'node:process';
 import { renderCommandHelp } from '@finografic/cli-kit/render-help';
 import * as clack from '@clack/prompts';
+import { selectHelp } from 'commands/select/select.help.js';
 import pc from 'picocolors';
 
 import { isCacheFresh, readCache } from 'utils/cache.utils.js';
@@ -20,17 +21,7 @@ interface RunSelectCommandParams {
  */
 export async function runSelectCommand({ argv }: RunSelectCommandParams): Promise<void> {
   if (argv.includes('--help') || argv.includes('-h')) {
-    renderCommandHelp({
-      command: 'gli select',
-      description: 'Interactively checkout a branch from one of your open PRs',
-      usage: 'gli select',
-      examples: [
-        {
-          command: 'gli select',
-          description: 'Show PR list and select a branch to checkout',
-        },
-      ],
-    });
+    renderCommandHelp(selectHelp);
     return;
   }
 

@@ -1,4 +1,5 @@
 import { renderCommandHelp } from '@finografic/cli-kit/render-help';
+import { liveHelp } from 'commands/live/live.help.js';
 import { runSilentRebaseAll } from 'commands/rebase/index.js';
 import logUpdate from 'log-update';
 import pc from 'picocolors';
@@ -178,53 +179,7 @@ function startSpinner(): () => void {
  */
 export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<void> {
   if (argv.includes('--help') || argv.includes('-h')) {
-    renderCommandHelp({
-      command: 'gli live',
-      description: 'Live-updating PR status dashboard (⭐ RECOMMENDED)',
-      usage: 'gli live',
-      options: [
-        {
-          flag: '--compact',
-          description: `Start in compact view (toggle anytime with [${COMPACT_TOGGLE_KEY.label}])`,
-        },
-        {
-          flag: '--auto-rebase',
-          description: `Silently rebase stale branches every ${DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH} refreshes`,
-        },
-      ],
-      examples: [
-        {
-          command: 'gli live',
-          description: `Start live dashboard (refreshes every ${DEFAULT_LIVE_INTERVAL_SECONDS}s by default)`,
-        },
-        {
-          command: 'gli live --auto-rebase',
-          description: 'Live dashboard with background auto-rebase of stale branches',
-        },
-        {
-          command: 'gli config edit',
-          description: 'Customize refresh interval, enable auto-rebase by default, and other settings',
-        },
-      ],
-      sections: [
-        {
-          title: 'DESCRIPTION',
-          content: `  Live-updating terminal dashboard for PR status, like htop but for your PRs.
-  Perfect for running in a terminal panel to monitor pull requests in real-time.
-
-  The dashboard shows:
-  - PR list with status indicators (clickable PR numbers and repo names)
-  - Build and approval status columns
-  - Config path footer
-
-  Refresh interval defaults to ${DEFAULT_LIVE_INTERVAL_SECONDS}s. Customize via \`gli config edit\` (live.interval).
-
-  Auto-rebase mode (--auto-rebase or live.autoRebase: true in config) silently rebases
-  stale branches every ${DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH} refreshes. Conflicts are skipped with a
-  warning shown in the footer. No prompts — fully automatic.`,
-        },
-      ],
-    });
+    renderCommandHelp(liveHelp);
     return;
   }
 

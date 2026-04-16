@@ -1,5 +1,6 @@
 import { exit } from 'node:process';
 import { renderCommandHelp } from '@finografic/cli-kit/render-help';
+import { statusHelp } from 'commands/status/status.help.js';
 import pc from 'picocolors';
 
 import { readConfig } from 'utils/config.utils.js';
@@ -18,27 +19,7 @@ interface RunStatusCommandParams {
  */
 export async function runStatusCommand({ argv }: RunStatusCommandParams): Promise<void> {
   if (argv.includes('--help') || argv.includes('-h')) {
-    renderCommandHelp({
-      command: 'gli status',
-      description: 'Snapshot of PR status (same as gli live, exits immediately)',
-      usage: 'gli status',
-      options: [
-        {
-          flag: '--compact',
-          description: 'Show compact view (hides title, shows only status icons)',
-        },
-      ],
-      examples: [
-        {
-          command: 'gli status',
-          description: 'Print PR status and exit',
-        },
-        {
-          command: 'gli status --compact',
-          description: 'Print compact PR status and exit',
-        },
-      ],
-    });
+    renderCommandHelp(statusHelp);
     return;
   }
 
