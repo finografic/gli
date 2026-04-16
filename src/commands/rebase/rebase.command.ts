@@ -193,14 +193,12 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
     all: { type: 'boolean' },
     interactive: { alias: 'i', type: 'boolean' },
     squash: { alias: 's', type: 'boolean' },
-    stay: { type: 'boolean' },
     y: { type: 'boolean' },
   });
 
   const all = Boolean(flow.flags['all']);
   const interactive = Boolean(flow.flags['interactive']);
   const squash = Boolean(flow.flags['squash']);
-  const stay = Boolean(flow.flags['stay']);
 
   if (argv.includes('--help') || argv.includes('-h')) {
     renderCommandHelp(rebaseHelp);
@@ -405,8 +403,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
     }
   }
 
-  // Return to original branch (unless --stay or failed on last)
-  if (!stay && lastBranch !== originalBranch) {
+  if (lastBranch !== originalBranch) {
     try {
       execSync(`git checkout ${originalBranch}`, {
         encoding: 'utf-8',
@@ -416,8 +413,6 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
     } catch {
       console.log(`  ${pc.yellow('⚠')} Could not return to ${originalBranch}`);
     }
-  } else if (stay && lastBranch !== originalBranch) {
-    console.log(`  ${pc.dim('Staying on')} ${pc.cyan(lastBranch)}`);
   }
 
   console.log('');

@@ -21,10 +21,6 @@ export const rebaseHelp: CommandHelpConfig = {
       flag: '-s, --squash',
       description: 'Auto-squash multiple commits into one',
     },
-    {
-      flag: '--stay',
-      description: "Stay on rebased branch (don't return to original)",
-    },
   ],
   examples: [
     {
@@ -44,10 +40,6 @@ export const rebaseHelp: CommandHelpConfig = {
       description: 'Auto-squash commits before rebasing',
     },
     {
-      command: 'gli rebase --all --stay',
-      description: 'Rebase all, stay on last branch',
-    },
-    {
       command: 'gli rebase --all -y',
       description: 'Rebase all stale branches, auto-confirm everything',
     },
@@ -57,6 +49,6 @@ export const rebaseHelp: CommandHelpConfig = {
     'Identifies branches that are BEHIND or have CONFLICTS',
     'For each branch: fetch, checkout, rebase, prompt to push',
     'Uses --force-with-lease for safe force-pushing',
-    'Returns to original branch (unless --stay flag)',
+    'Returns to original branch after all rebases complete',
   ],
 };

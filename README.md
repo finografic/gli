@@ -60,7 +60,6 @@ gli rebase --all            # Rebase all stale branches (step-through)
 gli rebase --all -y         # Rebase all, auto-accept prompts
 gli rebase -i               # Interactive rebase (manual pick/squash/edit)
 gli rebase -s               # Auto-squash multiple commits into one
-gli rebase --all --stay     # Rebase all, stay on last branch
 ```
 
 **Features:**
@@ -71,7 +70,7 @@ gli rebase --all --stay     # Rebase all, stay on last branch
 - Abort handling: continue to next branch or exit
 - Interactive mode (`-i`) for manual commit editing
 - Auto-squash (`-s`) for cleaning up commit history
-- Returns to original branch (unless `--stay` flag)
+- Returns to the branch you started on when finished
 - Yes-mode (`-y`) — auto-accepts rebase and force-push prompts
 
 ### `gli select`

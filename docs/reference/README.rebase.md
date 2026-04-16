@@ -22,14 +22,14 @@ gli rebase --all -y     # Rebase all stale branches, auto-confirm prompts
    - `git rebase origin/<default-branch>`
    - On conflict: aborts the rebase, shows manual resolution instructions, continues to next branch
    - On success: `git push --force-with-lease origin <branch>`
-6. Returns to the original branch when done (unless `--stay`)
+6. Returns to the original branch when done
 
 ## Safety
 
 - Refuses to run with uncommitted changes (commit or stash first)
 - Uses `--force-with-lease` (not `--force`) to prevent overwriting upstream changes
 - On conflict: aborts the rebase automatically and provides instructions for manual resolution
-- Returns to the original branch after completion (unless `--stay`)
+- Returns to the original branch after completion
 
 ## Prerequisites
 
@@ -45,5 +45,4 @@ gli rebase --all -y     # Rebase all stale branches, auto-confirm prompts
 | `-y`                  | Auto-accept prompts, including the initial `--all` confirmation |
 | `-i`, `--interactive` | Interactive rebase (manual pick/squash/edit)                    |
 | `-s`, `--squash`      | Auto-squash multiple commits into one                           |
-| `--stay`              | Stay on the last rebased branch (do not return to the original) |
 | `--help`, `-h`        | Show usage info                                                 |
