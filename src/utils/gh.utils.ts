@@ -199,8 +199,11 @@ export async function fetchMyOpenPrs({ repo }: { repo?: string } = {}): Promise<
   }
 }
 
-export async function fetchDefaultBranch(): Promise<string> {
-  const { stdout } = await execAsync('gh repo view --json defaultBranchRef --jq .defaultBranchRef.name');
+export async function fetchDefaultBranch({ repo }: { repo?: string } = {}): Promise<string> {
+  const repoArg = repo ? ` ${repo}` : '';
+  const { stdout } = await execAsync(
+    `gh repo view${repoArg} --json defaultBranchRef --jq .defaultBranchRef.name`,
+  );
   return stdout.trim();
 }
 

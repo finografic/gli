@@ -22,7 +22,6 @@ interface RebaseBranchParams {
   defaultBranch: string;
   interactive: boolean;
   squash: boolean;
-  dryRun: boolean;
   flow: FlowContext;
 }
 
@@ -31,31 +30,41 @@ interface RebaseBranchResult {
   aborted: boolean;
 }
 
+export interface SilentRebaseResult {
+  repoName: string;
+  branch: string;
+  success: boolean;
+  error?: string;
+}
+
 function needsRebase(pr: PrStatus): boolean {
   return pr.mergeStateStatus === 'BEHIND' || pr.mergeStateStatus === 'DIRTY';
 }
 
-function getCurrentBranch(): string {
+function getCurrentBranch(cwd?: string): string {
   return execSync('git rev-parse --abbrev-ref HEAD', {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
+    ...(cwd ? { cwd } : {}),
   }).trim();
 }
 
-function hasUncommittedChanges(): boolean {
+function hasUncommittedChanges(cwd?: string): boolean {
   const output = execSync('git status --porcelain', {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
+    ...(cwd ? { cwd } : {}),
   }).trim();
 
   return output.length > 0;
 }
 
-function getCommitCount({ defaultBranch }: { defaultBranch: string }): number {
+function getCommitCount({ defaultBranch, cwd }: { defaultBranch: string; cwd?: string }): number {
   try {
     const count = execSync(`git rev-list --count origin/${defaultBranch}..HEAD`, {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
+      ...(cwd ? { cwd } : {}),
     }).trim();
     return parseInt(count, 10);
   } catch {
@@ -69,17 +78,8 @@ async function rebaseBranch({
   defaultBranch,
   interactive,
   squash,
-  dryRun,
   flow,
 }: RebaseBranchParams): Promise<RebaseBranchResult> {
-  if (dryRun) {
-    const mode = squash ? 'squash and rebase' : interactive ? 'interactively rebase' : 'rebase';
-    console.log(
-      `  ${pc.dim('[dry-run]')} Would ${mode} ${pc.bold(branch)} onto ${pc.bold(`origin/${defaultBranch}`)}`,
-    );
-    return { success: true, aborted: false };
-  }
-
   // Fetch origin
   try {
     console.log(`  ${pc.dim('•')} Fetching origin...`);
@@ -189,15 +189,13 @@ async function rebaseBranch({
 
 export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   const flow = createFlowContext(argv, {
-    'dry-run': { type: 'boolean' },
-    'all': { type: 'boolean' },
-    'interactive': { alias: 'i', type: 'boolean' },
-    'squash': { alias: 's', type: 'boolean' },
-    'stay': { type: 'boolean' },
-    'y': { type: 'boolean' },
+    all: { type: 'boolean' },
+    interactive: { alias: 'i', type: 'boolean' },
+    squash: { alias: 's', type: 'boolean' },
+    stay: { type: 'boolean' },
+    y: { type: 'boolean' },
   });
 
-  const dryRun = Boolean(flow.flags['dry-run']);
   const all = Boolean(flow.flags['all']);
   const interactive = Boolean(flow.flags['interactive']);
   const squash = Boolean(flow.flags['squash']);
@@ -215,8 +213,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
         },
         {
           flag: '-y',
-          description:
-            'Auto-accept per-branch rebase and push prompts (does not skip the initial --all confirm)',
+          description: 'Auto-accept all prompts including the initial --all confirm',
         },
         {
           flag: '-i, --interactive',
@@ -229,10 +226,6 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
         {
           flag: '--stay',
           description: "Stay on rebased branch (don't return to original)",
-        },
-        {
-          flag: '--dry-run',
-          description: 'Show what would happen without executing',
         },
       ],
       examples: [
@@ -258,7 +251,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
         },
         {
           command: 'gli rebase --all -y',
-          description: 'Rebase all stale branches, auto-confirm each rebase and push',
+          description: 'Rebase all stale branches, auto-confirm everything',
         },
       ],
       howItWorks: [
@@ -283,7 +276,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
     exit(1);
   }
 
-  if (!dryRun && hasUncommittedChanges()) {
+  if (hasUncommittedChanges()) {
     console.log(`  ${pc.red('✗')} You have uncommitted changes. Please commit or stash them first.`);
     console.log('');
     exit(1);
@@ -358,11 +351,9 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
 
   if (all) {
     const confirmed = await promptConfirm(flow, {
-      message: `Rebase all ${stalePrs.length} branch${
-        stalePrs.length === 1 ? '' : 'es'
-      } onto origin/${defaultBranch}?`,
-      default: false,
-      required: true,
+      message: `Rebase all ${stalePrs.length} branch${stalePrs.length === 1 ? '' : 'es'} onto origin/${defaultBranch}?`,
+      default: flow.yesMode ? true : false,
+      skipMessage: `  ${pc.dim('→')} Auto-rebasing all ${stalePrs.length} stale branch${stalePrs.length === 1 ? '' : 'es'} ${pc.dim('(-y)')}`,
     });
     if (!confirmed) {
       console.log(`  ${pc.dim('Cancelled')}`);
@@ -417,7 +408,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
     console.log('');
 
     // Per-branch confirm (only in --all mode; auto-accepted with -y)
-    if (all && !dryRun) {
+    if (all) {
       const confirmBranch = await promptConfirm(flow, {
         message: `Rebase ${pc.cyan(pr.headRefName)}?`,
         default: true,
@@ -437,7 +428,6 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
       defaultBranch,
       interactive,
       squash,
-      dryRun,
       flow,
     });
 
@@ -474,7 +464,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   }
 
   // Return to original branch (unless --stay or failed on last)
-  if (!dryRun && !stay && lastBranch !== originalBranch) {
+  if (!stay && lastBranch !== originalBranch) {
     try {
       execSync(`git checkout ${originalBranch}`, {
         encoding: 'utf-8',
@@ -490,14 +480,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
 
   console.log('');
 
-  // Summary
-  if (dryRun) {
-    console.log(
-      `  ${pc.dim('Dry run complete —')} ${toRebase.length} branch${
-        toRebase.length === 1 ? '' : 'es'
-      } would be rebased`,
-    );
-  } else if (failed === 0) {
+  if (failed === 0) {
     console.log(`  ${pc.green('✓')} Rebased ${succeeded} branch${succeeded === 1 ? '' : 'es'} successfully`);
   } else {
     console.log(
@@ -506,4 +489,115 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   }
 
   console.log('');
+}
+
+/**
+ * Silently rebase all stale branches across all configured repos. Used by `gli live --auto-rebase`. No
+ * prompts, no console output. Failures are caught per-branch and the loop continues.
+ */
+export async function runSilentRebaseAll(): Promise<SilentRebaseResult[]> {
+  const config = readConfig();
+  const results: SilentRebaseResult[] = [];
+
+  let sections: RepoSection[];
+  try {
+    sections = await fetchPrSections();
+  } catch {
+    return [];
+  }
+
+  const normalise = (u: string) => u.replace(/\.git$/, '').replace(/\/+$/, '');
+
+  for (const section of sections) {
+    if (section.error || !section.repoInfo) continue;
+
+    const repoConfig = config.repos.find((r) => normalise(r.remote) === normalise(section.repoInfo!.url));
+    if (!repoConfig?.localPath) continue;
+
+    const localPath = repoConfig.localPath;
+    const stalePrs = section.pullRequests.filter((pr) => !pr.isDraft && needsRebase(pr));
+    if (stalePrs.length === 0) continue;
+
+    // Skip repo if there are uncommitted changes
+    if (hasUncommittedChanges(localPath)) {
+      results.push({
+        repoName: section.repoInfo.nameWithOwner,
+        branch: '*',
+        success: false,
+        error: 'Uncommitted changes',
+      });
+      continue;
+    }
+
+    let originalBranch: string;
+    try {
+      originalBranch = getCurrentBranch(localPath);
+    } catch {
+      continue;
+    }
+
+    let defaultBranch: string;
+    try {
+      defaultBranch = await fetchDefaultBranch({ repo: repoConfig.remote });
+    } catch {
+      continue;
+    }
+
+    for (const pr of stalePrs) {
+      try {
+        execSync('git fetch origin', {
+          cwd: localPath,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
+        execSync(`git checkout ${pr.headRefName}`, {
+          cwd: localPath,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
+        execSync(`git rebase origin/${defaultBranch}`, {
+          cwd: localPath,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
+        execSync(`git push --force-with-lease origin ${pr.headRefName}`, {
+          cwd: localPath,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
+        results.push({ repoName: section.repoInfo.nameWithOwner, branch: pr.headRefName, success: true });
+      } catch (err: unknown) {
+        try {
+          execSync('git rebase --abort', {
+            cwd: localPath,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe'],
+          });
+        } catch {
+          // Already aborted or not in progress
+        }
+        const message =
+          err instanceof Error ? (err.message.split('\n')[0] ?? 'Unknown error') : 'Unknown error';
+        results.push({
+          repoName: section.repoInfo.nameWithOwner,
+          branch: pr.headRefName,
+          success: false,
+          error: message,
+        });
+      }
+    }
+
+    // Return to original branch
+    try {
+      execSync(`git checkout ${originalBranch}`, {
+        cwd: localPath,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } catch {
+      // Non-critical
+    }
+  }
+
+  return results;
 }

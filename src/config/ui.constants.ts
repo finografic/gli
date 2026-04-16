@@ -1,6 +1,5 @@
 /**
- * Visual / UI defaults for the live display.
- * Spinners, colors, and display layout values live here.
+ * Visual / UI defaults for the live display. Spinners, colors, and display layout values live here.
  * Timing/interval values belong in defaults.constants.ts.
  */
 
@@ -11,8 +10,8 @@ export const SPINNER_SEQUENCE = ['|', '/', '-', '\\'] as const;
 export const SPINNER_INTERVAL_MS = 80;
 
 /**
- * Hotkey that toggles between full and compact PR list views in `gli live`.
- * Change this value here to remap the key.
+ * Hotkey that toggles between full and compact PR list views in `gli live`. Change this value here to remap
+ * the key.
  */
 export const COMPACT_TOGGLE_KEY = {
   label: 'space',
@@ -20,9 +19,8 @@ export const COMPACT_TOGGLE_KEY = {
 };
 
 /**
- * Number of characters to skip from the start of a PR title before
- * truncating. Useful when all titles share a common prefix (e.g. a
- * ticket number) that you'd rather omit from the display.
- * Writable to ~/.config/gli/config.json via prListing.title.sliceStart.
+ * Number of characters to skip from the start of a PR title before truncating. Useful when all titles share a
+ * common prefix (e.g. a ticket number) that you'd rather omit from the display. Writable to
+ * ~/.config/gli/config.json via prListing.title.sliceStart.
  */
 export const DEFAULT_PR_TITLE_SLICE_START = 0;

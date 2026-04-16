@@ -1,13 +1,20 @@
+import { runSilentRebaseAll } from 'commands/rebase/index.js';
 import { renderCommandHelp } from 'core/render-help/index.js';
 import logUpdate from 'log-update';
 import pc from 'picocolors';
+import type { SilentRebaseResult } from 'commands/rebase/index.js';
 
 import { writeCache } from 'utils/cache.utils.js';
 import { readConfig } from 'utils/config.utils.js';
 import type { RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
-import { DEFAULT_LIVE_INTERVAL_SECONDS, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
+
+import {
+  DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH,
+  DEFAULT_LIVE_INTERVAL_SECONDS,
+  DEFAULT_PR_TITLE_MAX_CHARS,
+} from 'config/defaults.constants.js';
 import { KEYCODES } from 'config/keycodes.constants';
 import {
   COMPACT_TOGGLE_KEY,
@@ -22,7 +29,57 @@ interface RunLiveCommandParams {
 
 // Module-level state shared between fetchAndDisplay, renderFromCache, and the keypress handler
 let isCompact = false;
+let isAutoRebase = false;
 let cachedSections: RepoSection[] | null = null;
+let refreshCount = 0;
+let autoRebaseRunning = false;
+let lastAutoRebaseResults: SilentRebaseResult[] | null = null;
+let lastAutoRebaseTime: Date | null = null;
+
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.round((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  return `${Math.round(seconds / 60)}m ago`;
+}
+
+function buildAutoRebaseFooterLine(): string | null {
+  if (!isAutoRebase) return null;
+
+  const remainder = refreshCount % DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH;
+  const nextIn =
+    remainder === 0
+      ? DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH
+      : DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH - remainder;
+
+  if (autoRebaseRunning) {
+    return `  ${pc.dim('Auto-rebase: running…')}`;
+  }
+
+  const nextLabel = `next in ${nextIn} refresh${nextIn === 1 ? '' : 'es'}`;
+
+  if (lastAutoRebaseResults !== null && lastAutoRebaseTime !== null) {
+    const succeeded = lastAutoRebaseResults.filter((r) => r.success).length;
+    const failed = lastAutoRebaseResults.filter((r) => !r.success).length;
+    const timeAgo = formatTimeAgo(lastAutoRebaseTime);
+
+    let statusText: string;
+    if (failed > 0) {
+      const failLabel = `${failed} conflict${failed === 1 ? '' : 's'}`;
+      statusText =
+        succeeded > 0
+          ? `${pc.yellow(`⚠ ${failLabel}`)}, ${pc.green(`${succeeded} ok`)}`
+          : pc.yellow(`⚠ ${failLabel}`);
+    } else if (succeeded > 0) {
+      statusText = pc.green(`✓ ${succeeded} rebased`);
+    } else {
+      statusText = pc.dim('✓ nothing to rebase');
+    }
+
+    return `  ${pc.dim(`Auto-rebase: ${timeAgo} · ${statusText} · ${nextLabel}`)}`;
+  }
+
+  return `  ${pc.dim(`Auto-rebase: ${nextLabel}`)}`;
+}
 
 function renderFromCache(): void {
   if (!cachedSections) return;
@@ -30,7 +87,8 @@ function renderFromCache(): void {
   const showTitle = config.prListing?.title?.display ?? false;
   const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
   const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
-  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
+  const liveInterval = config.live?.interval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
+  const autoRebaseLine = buildAutoRebaseFooterLine();
   const output = renderDisplay({
     sections: cachedSections,
     showTitle,
@@ -40,8 +98,24 @@ function renderFromCache(): void {
     isLive: true,
     compact: isCompact,
     jiraConfig: config.jira,
+    extraFooterLines: autoRebaseLine ? [autoRebaseLine] : undefined,
   });
   logUpdate(output);
+}
+
+function triggerAutoRebase(): void {
+  autoRebaseRunning = true;
+  renderFromCache(); // Show "running…" immediately
+  runSilentRebaseAll()
+    .then((results) => {
+      lastAutoRebaseResults = results;
+      lastAutoRebaseTime = new Date();
+      autoRebaseRunning = false;
+      renderFromCache();
+    })
+    .catch(() => {
+      autoRebaseRunning = false;
+    });
 }
 
 /**
@@ -54,10 +128,13 @@ async function fetchAndDisplay(): Promise<void> {
     cachedSections = sections;
     writeCache({ sections });
 
+    refreshCount++;
+
     const showTitle = config.prListing?.title?.display ?? false;
     const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
     const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
-    const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
+    const liveInterval = config.live?.interval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
+    const autoRebaseLine = buildAutoRebaseFooterLine();
 
     const output = renderDisplay({
       sections,
@@ -68,17 +145,22 @@ async function fetchAndDisplay(): Promise<void> {
       isLive: true,
       compact: isCompact,
       jiraConfig: config.jira,
+      extraFooterLines: autoRebaseLine ? [autoRebaseLine] : undefined,
     });
 
     logUpdate(output);
+
+    if (isAutoRebase && !autoRebaseRunning && refreshCount % DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH === 0) {
+      triggerAutoRebase();
+    }
   } catch (error: unknown) {
     logUpdate(`\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`);
   }
 }
 
 /**
- * Show a spinner via logUpdate while waiting for the first data fetch.
- * Returns a cleanup function that stops the spinner.
+ * Show a spinner via logUpdate while waiting for the first data fetch. Returns a cleanup function that stops
+ * the spinner.
  */
 function startSpinner(): () => void {
   let frame = 0;
@@ -105,6 +187,10 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
           flag: '--compact',
           description: `Start in compact view (toggle anytime with [${COMPACT_TOGGLE_KEY.label}])`,
         },
+        {
+          flag: '--auto-rebase',
+          description: `Silently rebase stale branches every ${DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH} refreshes`,
+        },
       ],
       examples: [
         {
@@ -112,8 +198,12 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
           description: `Start live dashboard (refreshes every ${DEFAULT_LIVE_INTERVAL_SECONDS}s by default)`,
         },
         {
+          command: 'gli live --auto-rebase',
+          description: 'Live dashboard with background auto-rebase of stale branches',
+        },
+        {
           command: 'gli config edit',
-          description: 'Customize refresh interval and other settings',
+          description: 'Customize refresh interval, enable auto-rebase by default, and other settings',
         },
       ],
       sections: [
@@ -127,7 +217,11 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
   - Build and approval status columns
   - Config path footer
 
-  Refresh interval defaults to ${DEFAULT_LIVE_INTERVAL_SECONDS}s. Customize via \`gli config edit\` (liveInterval).`,
+  Refresh interval defaults to ${DEFAULT_LIVE_INTERVAL_SECONDS}s. Customize via \`gli config edit\` (live.interval).
+
+  Auto-rebase mode (--auto-rebase or live.autoRebase: true in config) silently rebases
+  stale branches every ${DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH} refreshes. Conflicts are skipped with a
+  warning shown in the footer. No prompts — fully automatic.`,
         },
       ],
     });
@@ -142,8 +236,17 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
     process.exit(1);
   }
 
-  // Set initial compact state from flag
+  const config = readConfig();
+
+  // Set initial state from flags / config
   isCompact = argv.includes('--compact');
+  isAutoRebase = argv.includes('--auto-rebase') || (config.live?.autoRebase ?? false);
+
+  // Reset module-level state for clean run
+  refreshCount = 0;
+  autoRebaseRunning = false;
+  lastAutoRebaseResults = null;
+  lastAutoRebaseTime = null;
 
   // Set up raw keypress listener for hotkey toggle.
   // Wrapped in try/catch because setRawMode throws when stdin is not a TTY
@@ -171,8 +274,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
   stopSpinner();
 
   // Read interval from config for the polling loop
-  const config = readConfig();
-  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
+  const liveInterval = config.live?.interval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
   const intervalMs = liveInterval * 1000;
 
   setInterval(() => {

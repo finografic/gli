@@ -5,7 +5,10 @@
       "remote": "https://github.com/finografic/gli"
     }
   ],
-  "liveInterval": 60,
+  "live": {
+    "interval": 60,
+    "autoRebase": false
+  },
   "jira": {
     "baseUrl": "",
     "issuePrefix": ""
