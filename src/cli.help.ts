@@ -24,7 +24,7 @@ export const cliHelp: HelpConfig = {
       { label: 'Snapshot of PR status (exits)', description: 'gli status' },
       { label: 'Select and rebase a branch', description: 'gli rebase' },
       { label: 'Rebase all stale branches, auto-confirm each', description: 'gli rebase --all -y' },
-      { label: 'Add current repo to config', description: 'gli config add' },
+      { label: 'Add a repo to config (watch)', description: 'gli config watch' },
       { label: 'Edit config in $EDITOR', description: 'gli config edit' },
     ],
   },

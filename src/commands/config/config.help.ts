@@ -5,17 +5,15 @@ export const configHelp: CommandHelpConfig = {
   description: 'Manage multi-repo configuration',
   usage: 'gli config <subcommand>',
   subcommands: [
-    { name: 'add', description: 'Add a repository to the config' },
+    { name: 'watch', description: 'Add a repository to the config (prompts for path and GitHub URL)' },
     { name: 'list', description: 'List all configured repositories' },
     { name: 'remove', description: 'Remove a repository from the config' },
-    { name: 'path', description: 'Show the config file path' },
     { name: 'edit', description: 'Open config file in $EDITOR' },
   ],
   examples: [
-    { command: 'gli config add', description: 'Add current directory' },
+    { command: 'gli config watch', description: 'Add current directory (or chosen path) to config' },
     { command: 'gli config list', description: 'Show all repos' },
     { command: 'gli config remove', description: 'Remove a repo' },
-    { command: 'gli config path', description: 'Show config file location' },
     { command: 'gli config edit', description: 'Edit config in $EDITOR / vim' },
   ],
 };

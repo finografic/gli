@@ -15,8 +15,8 @@ interface RunConfigCommandParams {
   argv: string[];
 }
 
-async function runAddRepo(): Promise<void> {
-  clack.intro('Add Repo');
+async function runWatchRepo(): Promise<void> {
+  clack.intro('Watch repo');
 
   const currentPath = cwd();
 
@@ -68,7 +68,7 @@ async function runList(): Promise<void> {
   const repos = await listRepos();
 
   if (repos.length === 0) {
-    clack.log.info('No repos configured. Run `gli config add` to add one.');
+    clack.log.info('No repos configured. Run `gli config watch` to add one.');
     return;
   }
 
@@ -110,10 +110,6 @@ async function runRemoveRepo(): Promise<void> {
   clack.outro('Done');
 }
 
-function runPath(): void {
-  console.log(getConfigFilePath());
-}
-
 function runEdit(): void {
   const configPath = getConfigFilePath();
   const editor = process.env['EDITOR'] || process.env['VISUAL'] || 'vim';
@@ -132,8 +128,8 @@ export async function runConfigCommand({ argv }: RunConfigCommandParams): Promis
     return;
   }
 
-  if (subcommand === 'add') {
-    await runAddRepo();
+  if (subcommand === 'watch') {
+    await runWatchRepo();
     return;
   }
 
@@ -144,11 +140,6 @@ export async function runConfigCommand({ argv }: RunConfigCommandParams): Promis
 
   if (subcommand === 'remove') {
     await runRemoveRepo();
-    return;
-  }
-
-  if (subcommand === 'path') {
-    runPath();
     return;
   }
 

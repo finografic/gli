@@ -61,7 +61,6 @@ gli rebase --all -y         # Rebase all, auto-accept prompts
 gli rebase -i               # Interactive rebase (manual pick/squash/edit)
 gli rebase -s               # Auto-squash multiple commits into one
 gli rebase --all --stay     # Rebase all, stay on last branch
-gli rebase --dry-run        # Preview without executing
 ```
 
 **Features:**
@@ -90,10 +89,9 @@ Manage the multi-repo configuration stored at `~/.config/gli/config.json`.
 On first run, the config file is written with **all default values** so every option is visible and editable.
 
 ```bash
-gli config add       # Add a repo (auto-detects current repo)
+gli config watch     # Add a repo to the config (prompts for path and GitHub URL)
 gli config list      # List configured repos
 gli config remove    # Remove a repo interactively
-gli config path      # Show config file path
 gli config edit      # Open config in $EDITOR
 ```
 

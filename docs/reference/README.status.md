@@ -33,9 +33,9 @@ gli status --all    # All configured repos
 When using `--all`, PRs are fetched across all repos registered via `gli config`:
 
 ```bash
-gli config add-repo     # Add a repo (owner/repo format)
+gli config watch        # Add a repo (path + GitHub URL prompts)
 gli config list         # List configured repos
-gli config remove-repo  # Remove a repo interactively
+gli config remove       # Remove a repo interactively
 ```
 
 Config is stored at `~/.config/gli/config.json` (respects `$XDG_CONFIG_HOME`).
@@ -46,7 +46,7 @@ Each repo's PRs are displayed under a header, with an aggregated summary at the 
 
 - [GitHub CLI](https://cli.github.com) installed and authenticated (`gh auth login`)
 - Single-repo mode: run from inside a GitHub-hosted git repository
-- Multi-repo mode: repos configured via `gli config add-repo`
+- Multi-repo mode: repos configured via `gli config watch`
 
 ## Flags
 

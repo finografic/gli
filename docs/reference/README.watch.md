@@ -48,7 +48,7 @@ Check results are logged to `~/.config/gli/logs/watch.log` for debugging.
 
 - macOS (uses LaunchAgents)
 - [GitHub CLI](https://cli.github.com) installed and authenticated
-- Repos configured via `gli config add-repo`
+- Repos configured via `gli config watch`
 - Optional: `terminal-notifier` (`brew install terminal-notifier`) for clickable notifications
 
 ## Subcommands
