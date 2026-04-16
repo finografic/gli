@@ -113,9 +113,8 @@ export function terminalLink({ url, label }: { url: string; label: string }): st
 }
 
 /**
- * Extract a JIRA-style ticket key from a branch name.
- * Matches the first occurrence of PROJECT-NUMBER (e.g. SBS-1234, JIRA-42).
- * Ignores common branch prefixes like build-, feature-, fix-, etc.
+ * Extract a JIRA-style ticket key from a branch name. Matches the first occurrence of PROJECT-NUMBER (e.g.
+ * SBS-1234, JIRA-42). Ignores common branch prefixes like build-, feature-, fix-, etc.
  */
 export function getJiraTicketFromBranch({
   branch,
@@ -139,6 +138,7 @@ export function formatPrLine({
   titleWidth = 0,
   titleSliceStart = 0,
   buildWidth = 0,
+  approvalWidth = 0,
   commentsWidth = 0,
   compact = false,
   jiraConfig,
@@ -149,6 +149,7 @@ export function formatPrLine({
   titleWidth?: number;
   titleSliceStart?: number;
   buildWidth?: number;
+  approvalWidth?: number;
   commentsWidth?: number;
   compact?: boolean;
   jiraConfig?: { baseUrl: string; issuePrefix?: string };
@@ -189,9 +190,12 @@ export function formatPrLine({
     const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
     const approvalStatusText = approvalDisplay.color(approvalText);
     const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
+    const approvalPadding = approvalWidth > 0 ? approvalWidth - approvalText.length : 0;
     return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${' '.repeat(
       branchPadding,
-    )}  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${commentsPart}`;
+    )}  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${' '.repeat(
+      approvalPadding,
+    )}${commentsPart}`;
   }
 
   // Full mode
@@ -200,6 +204,7 @@ export function formatPrLine({
   const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
   const approvalStatusText = approvalDisplay.color(approvalText);
   const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
+  const approvalPadding = approvalWidth > 0 ? approvalWidth - approvalText.length : 0;
 
   // Optional title column — trim front/back whitespace, then slice from start
   let titlePart = '';
@@ -214,7 +219,9 @@ export function formatPrLine({
 
   return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${' '.repeat(
     branchPadding,
-  )}${titlePart}  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${commentsPart}`;
+  )}${titlePart}  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${' '.repeat(
+    approvalPadding,
+  )}${commentsPart}`;
 }
 
 interface FormatPrLinesParams {
@@ -226,6 +233,7 @@ interface FormatPrLinesParams {
   prNumWidth?: number;
   branchWidth?: number;
   buildWidth?: number;
+  approvalWidth?: number;
   commentsWidth?: number;
   /** Compact mode: hides title, shows only build icon, shows approval icon + count only. */
   compact?: boolean;
@@ -234,8 +242,8 @@ interface FormatPrLinesParams {
 }
 
 /**
- * Format multiple PR lines with aligned columns.
- * Pass pre-computed widths to align columns across multiple repos.
+ * Format multiple PR lines with aligned columns. Pass pre-computed widths to align columns across multiple
+ * repos.
  */
 export function formatPrLines({
   prs,
@@ -245,6 +253,7 @@ export function formatPrLines({
   prNumWidth: prNumWidthOverride,
   branchWidth: branchWidthOverride,
   buildWidth: buildWidthOverride,
+  approvalWidth: approvalWidthOverride,
   commentsWidth: commentsWidthOverride,
   compact = false,
   jiraConfig,
@@ -266,6 +275,15 @@ export function formatPrLines({
       }),
     );
 
+  const approvalWidth =
+    approvalWidthOverride ??
+    Math.max(
+      ...prs.map((pr) => {
+        const display = getApprovalStatusDisplay({ pr });
+        return `${display.symbol} ${display.label}`.length;
+      }),
+    );
+
   const commentsWidth =
     commentsWidthOverride ?? Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length));
 
@@ -277,6 +295,7 @@ export function formatPrLines({
       titleWidth,
       titleSliceStart,
       buildWidth,
+      approvalWidth,
       commentsWidth,
       compact,
       jiraConfig,
@@ -285,17 +304,18 @@ export function formatPrLines({
 }
 
 /**
- * Compute the column widths needed to align PR rows across multiple batches.
- * Useful for cross-repo alignment in the live display.
+ * Compute the column widths needed to align PR rows across multiple batches. Useful for cross-repo alignment
+ * in the live display.
  */
 export function computeColumnWidths({ prs }: { prs: PrStatus[] }): {
   prNumWidth: number;
   branchWidth: number;
   buildWidth: number;
+  approvalWidth: number;
   commentsWidth: number;
 } {
   if (prs.length === 0) {
-    return { prNumWidth: 0, branchWidth: 0, buildWidth: 0, commentsWidth: 0 };
+    return { prNumWidth: 0, branchWidth: 0, buildWidth: 0, approvalWidth: 0, commentsWidth: 0 };
   }
   return {
     prNumWidth: Math.max(...prs.map((pr) => `PR#${pr.number}`.length)),
@@ -306,13 +326,19 @@ export function computeColumnWidths({ prs }: { prs: PrStatus[] }): {
         return `${d.symbol} ${d.label}`.length;
       }),
     ),
+    approvalWidth: Math.max(
+      ...prs.map((pr) => {
+        const display = getApprovalStatusDisplay({ pr });
+        return `${display.symbol} ${display.label}`.length;
+      }),
+    ),
     commentsWidth: Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length)),
   };
 }
 
 /**
- * Format PR options for a clack select prompt.
- * Each option has the branch name (aligned, cyan) followed by the truncated title (dim).
+ * Format PR options for a clack select prompt. Each option has the branch name (aligned, cyan) followed by
+ * the truncated title (dim).
  */
 export function formatSelectOptions({
   prs,
