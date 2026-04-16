@@ -1,8 +1,8 @@
 import { execSync } from 'node:child_process';
 import { cwd } from 'node:process';
 import { exit } from 'node:process';
+import { renderCommandHelp } from '@finografic/cli-kit/render-help';
 import * as clack from '@clack/prompts';
-import { renderCommandHelp } from 'core/render-help/index.js';
 import pc from 'picocolors';
 
 import { isCacheFresh, readCache } from 'utils/cache.utils.js';
@@ -42,7 +42,7 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
     exit(1);
   }
 
-  const config = readConfig();
+  const config = await readConfig();
 
   // Match cwd against a configured repo localPath (support being in a subdirectory)
   const currentDir = cwd();

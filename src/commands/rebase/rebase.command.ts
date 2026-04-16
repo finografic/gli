@@ -1,10 +1,10 @@
 import { execSync } from 'node:child_process';
 import { exit } from 'node:process';
+import { createFlowContext, promptConfirm } from '@finografic/cli-kit/flow';
+import type { FlowContext } from '@finografic/cli-kit/flow';
+import { renderCommandHelp } from '@finografic/cli-kit/render-help';
 import * as clack from '@clack/prompts';
-import { createFlowContext, promptConfirm } from 'core/flow/index.js';
-import { renderCommandHelp } from 'core/render-help/index.js';
 import pc from 'picocolors';
-import type { FlowContext } from 'core/flow/index.js';
 
 import { readConfig } from 'utils/config.utils.js';
 import type { PrStatus, RepoSection } from 'utils/gh.utils.js';
@@ -289,7 +289,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   try {
     const allSections = await fetchPrSections();
     const cwd = process.cwd();
-    const config = readConfig();
+    const config = await readConfig();
     const matchedRepo = config.repos.find((r) => cwd === r.localPath || cwd.startsWith(`${r.localPath}/`));
     let sections: RepoSection[];
     if (matchedRepo) {
@@ -312,7 +312,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
 
   console.log('');
 
-  const config = readConfig();
+  const config = await readConfig();
   const cwd = process.cwd();
   const matchedRepoConfig = config.repos.find(
     (r) => cwd === r.localPath || cwd.startsWith(`${r.localPath}/`),
@@ -496,7 +496,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
  * prompts, no console output. Failures are caught per-branch and the loop continues.
  */
 export async function runSilentRebaseAll(): Promise<SilentRebaseResult[]> {
-  const config = readConfig();
+  const config = await readConfig();
   const results: SilentRebaseResult[] = [];
 
   let sections: RepoSection[];

@@ -1,5 +1,5 @@
+import { renderCommandHelp } from '@finografic/cli-kit/render-help';
 import { runSilentRebaseAll } from 'commands/rebase/index.js';
-import { renderCommandHelp } from 'core/render-help/index.js';
 import logUpdate from 'log-update';
 import pc from 'picocolors';
 import type { SilentRebaseResult } from 'commands/rebase/index.js';
@@ -81,9 +81,9 @@ function buildAutoRebaseFooterLine(): string | null {
   return `  ${pc.dim(`Auto-rebase: ${nextLabel}`)}`;
 }
 
-function renderFromCache(): void {
+async function renderFromCache(): Promise<void> {
   if (!cachedSections) return;
-  const config = readConfig();
+  const config = await readConfig();
   const showTitle = config.prListing?.title?.display ?? false;
   const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
   const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
@@ -105,13 +105,13 @@ function renderFromCache(): void {
 
 function triggerAutoRebase(): void {
   autoRebaseRunning = true;
-  renderFromCache(); // Show "running…" immediately
+  void renderFromCache(); // Show "running…" immediately
   runSilentRebaseAll()
     .then((results) => {
       lastAutoRebaseResults = results;
       lastAutoRebaseTime = new Date();
       autoRebaseRunning = false;
-      renderFromCache();
+      void renderFromCache();
     })
     .catch(() => {
       autoRebaseRunning = false;
@@ -123,7 +123,7 @@ function triggerAutoRebase(): void {
  */
 async function fetchAndDisplay(): Promise<void> {
   try {
-    const config = readConfig();
+    const config = await readConfig();
     const sections = await fetchPrSections();
     cachedSections = sections;
     writeCache({ sections });
@@ -236,7 +236,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
     process.exit(1);
   }
 
-  const config = readConfig();
+  const config = await readConfig();
 
   // Set initial state from flags / config
   isCompact = argv.includes('--compact');
@@ -258,7 +258,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
     process.stdin.on('data', (key: string) => {
       if (key === COMPACT_TOGGLE_KEY.binding) {
         isCompact = !isCompact;
-        renderFromCache();
+        void renderFromCache();
       } else if (key === KEYCODES.CTRL_C || key === KEYCODES.Q) {
         process.exit(0);
       }

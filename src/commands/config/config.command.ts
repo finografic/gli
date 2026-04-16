@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { cwd } from 'node:process';
+import { renderCommandHelp } from '@finografic/cli-kit/render-help';
 import * as clack from '@clack/prompts';
-import { renderCommandHelp } from 'core/render-help/index.js';
 import pc from 'picocolors';
 
 import { getConfigFilePath, tildeify } from 'utils/config.utils.js';
@@ -73,7 +73,7 @@ async function runAddRepo(): Promise<void> {
     return;
   }
 
-  if (listRepos().some((r) => r.remote === remote)) {
+  if ((await listRepos()).some((r) => r.remote === remote)) {
     clack.log.warn(`${pc.cyan(remote as string)} is already in your config`);
     clack.outro('Nothing to add');
     return;
@@ -85,8 +85,8 @@ async function runAddRepo(): Promise<void> {
   clack.outro('Done');
 }
 
-function runList(): void {
-  const repos = listRepos();
+async function runList(): Promise<void> {
+  const repos = await listRepos();
 
   if (repos.length === 0) {
     clack.log.info('No repos configured. Run `gli config add` to add one.');
@@ -103,7 +103,7 @@ function runList(): void {
 }
 
 async function runRemoveRepo(): Promise<void> {
-  const repos = listRepos();
+  const repos = await listRepos();
 
   if (repos.length === 0) {
     clack.log.info('No repos configured. Nothing to remove.');
@@ -126,8 +126,8 @@ async function runRemoveRepo(): Promise<void> {
     return;
   }
 
-  removeRepo({ remote: selected });
-  clack.log.success(`Removed ${pc.bold(selected)}`);
+  await removeRepo({ remote: selected as string });
+  clack.log.success(`Removed ${pc.bold(selected as string)}`);
   clack.outro('Done');
 }
 
@@ -159,7 +159,7 @@ export async function runConfigCommand({ argv }: RunConfigCommandParams): Promis
   }
 
   if (subcommand === 'list') {
-    runList();
+    await runList();
     return;
   }
 

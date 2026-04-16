@@ -124,7 +124,7 @@ export function renderDisplay({
  * Fetch PR sections from all configured repos (or current directory as fallback).
  */
 export async function fetchPrSections(): Promise<RepoSection[]> {
-  const config = readConfig();
+  const config = await readConfig();
   const globalJira: JiraConfig | undefined =
     config.jira ??
     (DEFAULT_JIRA_BASE_URL

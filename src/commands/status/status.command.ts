@@ -1,5 +1,5 @@
 import { exit } from 'node:process';
-import { renderCommandHelp } from 'core/render-help/index.js';
+import { renderCommandHelp } from '@finografic/cli-kit/render-help';
 import pc from 'picocolors';
 
 import { readConfig } from 'utils/config.utils.js';
@@ -51,7 +51,7 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
   }
 
   try {
-    const config = readConfig();
+    const config = await readConfig();
     const sections = await fetchPrSections();
     const compact = argv.includes('--compact');
 

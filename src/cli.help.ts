@@ -1,4 +1,4 @@
-import type { HelpConfig } from 'core/render-help/index.js';
+import type { HelpConfig } from '@finografic/cli-kit/render-help';
 
 export const cliHelp: HelpConfig = {
   main: {

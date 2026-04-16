@@ -4,12 +4,12 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { renderHelp } from '@finografic/cli-kit/render-help';
 import { runConfigCommand } from 'commands/config/index.js';
 import { runLiveCommand } from 'commands/live/index.js';
 import { runRebaseCommand } from 'commands/rebase/index.js';
 import { runSelectCommand } from 'commands/select/index.js';
 import { runStatusCommand } from 'commands/status/index.js';
-import { renderHelp } from 'core/render-help/index.js';
 
 import { cliHelp } from './cli.help.js';
 

@@ -1,49 +1,46 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { getConfigPath, readJsonc, writeJsonc } from '@finografic/cli-kit/xdg';
 
 import { FULL_DEFAULT_CONFIG } from 'config/defaults.constants.js';
-import { CONFIG_FILE, CONFIG_PATH } from 'config/paths.constants.js';
 import type { GliConfiguration, JiraConfig } from 'types/config.types.js';
+
+const CONFIG_FILE = join(getConfigPath('gli'), 'config.json');
 
 /** True when `jira.baseUrl` is a non-empty string (after trim). */
 export function isJiraLinksEnabled(jira?: JiraConfig | null): boolean {
   return typeof jira?.baseUrl === 'string' && jira.baseUrl.trim().length > 0;
 }
 
-export function writeConfig({ config }: { config: GliConfiguration }): void {
-  mkdirSync(CONFIG_PATH, { recursive: true });
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+export async function writeConfig({ config }: { config: GliConfiguration }): Promise<void> {
+  await writeJsonc(CONFIG_FILE, config);
 }
 
-export function readConfig(): GliConfiguration {
-  if (!existsSync(CONFIG_FILE)) {
+export async function readConfig(): Promise<GliConfiguration> {
+  const parsed = await readJsonc<unknown>(CONFIG_FILE);
+
+  if (parsed === null) {
     // First run → persist defaults so users can inspect/edit them
-    writeConfig({ config: FULL_DEFAULT_CONFIG });
+    await writeConfig({ config: FULL_DEFAULT_CONFIG });
     return { ...FULL_DEFAULT_CONFIG };
   }
 
-  try {
-    const parsed: unknown = JSON.parse(readFileSync(CONFIG_FILE, 'utf-8'));
-    const legacyJiraBaseUrl = isRecord(parsed) ? parsed['jiraBaseUrl'] : undefined;
+  const legacyJiraBaseUrl = isRecord(parsed) ? parsed['jiraBaseUrl'] : undefined;
 
-    if (!isValidConfig(parsed)) {
-      return { ...FULL_DEFAULT_CONFIG };
-    }
-
-    const config = parsed as GliConfiguration;
-
-    if (!config.jira && typeof legacyJiraBaseUrl === 'string' && legacyJiraBaseUrl.trim().length > 0) {
-      return {
-        ...config,
-        jira: { baseUrl: legacyJiraBaseUrl.trim() },
-      };
-    }
-
-    return config;
-  } catch {
-    // Any read/parse failure falls back to safe defaults
+  if (!isValidConfig(parsed)) {
     return { ...FULL_DEFAULT_CONFIG };
   }
+
+  const config = parsed as GliConfiguration;
+
+  if (!config.jira && typeof legacyJiraBaseUrl === 'string' && legacyJiraBaseUrl.trim().length > 0) {
+    return {
+      ...config,
+      jira: { baseUrl: legacyJiraBaseUrl.trim() },
+    };
+  }
+
+  return config;
 }
 
 /** Narrow unknown → GliConfiguration (minimal structural check). */
