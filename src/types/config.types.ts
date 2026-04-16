@@ -32,7 +32,7 @@ export interface GliConfiguration {
    * "https://your-org.atlassian.net/browse", "issuePrefix": "PROJ" }
    */
   jira?: JiraConfig;
-  prListing?: {
+  prs?: {
     title?: {
       display?: boolean;
       maxChars?: number;

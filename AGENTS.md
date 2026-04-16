@@ -47,6 +47,8 @@ Rules are canonical in `.github/instructions/` and shared across Claude Code, Cu
 
 - Ignore .cursor/chats and .cursor/hooks; commit .cursor/mcp.json
 - Prefer default `~/.config/gli/config.json` templates that list all keys (including optional blocks like `jira` with empty strings) so users can edit without inferring field names
+- Prefer documentation and CLI examples that match shipped behavior (for example `gli rebase` has no `--dry-run` or `--stay`)
+- Prefer per-command `*.help.ts` modules to import only types from `@finografic/cli-kit/render-help` and use literals (or comments pointing at constants) for default values in help text rather than importing app config modules
 
 ## Learned Workspace Facts
 
@@ -54,3 +56,6 @@ Rules are canonical in `.github/instructions/` and shared across Claude Code, Cu
 - The CLI entry is `src/cli.ts`, built to `dist/cli.mjs`; `main`, `types`, `exports["."]`, and `bin.gli` all target that bundle.
 - TypeScript `paths` in `tsconfig` are resolved when bundling with tsdown; Vitest (or other runners) needs matching alias resolution if tests import via those aliases.
 - Jira issue links in PR output are off when `jira.baseUrl` is missing, empty, or whitespace-only after trim; legacy top-level `jiraBaseUrl` in config is not read.
+- Per-command `--help` text lives in `src/commands/<name>/<name>.help.ts` as `CommandHelpConfig`; root `gli --help` overview stays in `src/cli.help.ts`
+- `gli config` subcommands are `watch`, `list`, `remove`, and `edit` (there is no `path` or `add` subcommand)
+- PR list display settings in user config use the `prs` key (`prs.title.*`); `readConfig` still maps legacy `prListing` into `prs` when `prs` is absent

@@ -96,14 +96,14 @@ gli config edit      # Open config in $EDITOR
 
 **Config options** (all shown in the generated config file):
 
-| Key                          | Default   | Description                                        |
-| ---------------------------- | --------- | -------------------------------------------------- |
-| `liveInterval`               | `60`      | Refresh interval in seconds for `gli live`         |
-| `jira.baseUrl`               | _(unset)_ | Global Jira browse URL for branch ticket links     |
-| `jira.issuePrefix`           | _(unset)_ | Optional Jira key prefix filter (e.g. `SBS`)       |
-| `prListing.title.display`    | `false`   | Show PR title column                               |
-| `prListing.title.maxChars`   | `40`      | Max title characters to display                    |
-| `prListing.title.sliceStart` | `0`       | Skip N chars from title start (e.g. ticket prefix) |
+| Key                    | Default   | Description                                        |
+| ---------------------- | --------- | -------------------------------------------------- |
+| `liveInterval`         | `60`      | Refresh interval in seconds for `gli live`         |
+| `jira.baseUrl`         | _(unset)_ | Global Jira browse URL for branch ticket links     |
+| `jira.issuePrefix`     | _(unset)_ | Optional Jira key prefix filter (e.g. `SBS`)       |
+| `prs.title.display`    | `false`   | Show PR title column                               |
+| `prs.title.maxChars`   | `40`      | Max title characters to display                    |
+| `prs.title.sliceStart` | `0`       | Skip N chars from title start (e.g. ticket prefix) |
 
 ## Prerequisites
 

@@ -262,8 +262,8 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   // Show full report (all PRs) — compact by default in rebase context
   const formattedLines = formatPrLines({
     prs: pullRequests,
-    showTitle: config.prListing?.title?.display,
-    titleMaxChars: config.prListing?.title?.maxChars,
+    showTitle: config.prs?.title?.display,
+    titleMaxChars: config.prs?.title?.maxChars,
     compact: true,
     jiraConfig,
   });

@@ -100,8 +100,8 @@ export async function runSelectCommand({ argv }: RunSelectCommandParams): Promis
   // Interactive selection — branch name (aligned) + dim title in each option
   const options = formatSelectOptions({
     prs: pullRequests,
-    titleMaxChars: config.prListing?.title?.maxChars,
-    titleSliceStart: config.prListing?.title?.sliceStart,
+    titleMaxChars: config.prs?.title?.maxChars,
+    titleSliceStart: config.prs?.title?.sliceStart,
   });
 
   const selectedBranch = await clack.select({

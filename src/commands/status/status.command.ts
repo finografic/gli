@@ -36,9 +36,9 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
     const sections = await fetchPrSections();
     const compact = argv.includes('--compact');
 
-    const showTitle = config.prListing?.title?.display ?? false;
-    const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
-    const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
+    const showTitle = config.prs?.title?.display ?? false;
+    const titleMaxChars = config.prs?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
+    const titleSliceStart = config.prs?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
     const liveInterval = config.live?.interval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
 
     const output = renderDisplay({

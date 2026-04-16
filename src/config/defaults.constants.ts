@@ -35,7 +35,7 @@ export const FULL_DEFAULT_CONFIG: GliConfiguration = {
     baseUrl: '',
     issuePrefix: '',
   },
-  prListing: {
+  prs: {
     title: {
       display: false,
       maxChars: DEFAULT_PR_TITLE_MAX_CHARS,
