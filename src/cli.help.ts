@@ -21,6 +21,7 @@ export const cliHelp: HelpConfig = {
     title: 'Examples',
     list: [
       { label: 'Start live PR dashboard', description: 'gli live' },
+      { label: 'Live dashboard + background auto-rebase', description: 'gli live --auto-rebase' },
       { label: 'Snapshot of PR status (exits)', description: 'gli status' },
       { label: 'Select and rebase a branch', description: 'gli rebase' },
       { label: 'Rebase all stale branches, auto-confirm each', description: 'gli rebase --all -y' },

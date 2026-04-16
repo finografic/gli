@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 
-import { FULL_DEFAULT_CONFIG } from 'config/defaults.constants.js';
+import { DEFAULT_LIVE_INTERVAL_SECONDS, FULL_DEFAULT_CONFIG } from 'config/defaults.constants.js';
 import { CONFIG_FILE, CONFIG_PATH } from 'config/paths.constants.js';
-import type { GliConfiguration, JiraConfig } from 'types/config.types.js';
+import type { GliConfiguration, JiraConfig, LiveConfig } from 'types/config.types.js';
 
 /** True when `jira.baseUrl` is a non-empty string (after trim). */
 export function isJiraLinksEnabled(jira?: JiraConfig | null): boolean {
@@ -30,7 +30,7 @@ export function readConfig(): GliConfiguration {
       return { ...FULL_DEFAULT_CONFIG };
     }
 
-    const config = parsed as GliConfiguration;
+    const config = normalizeParsedConfig(parsed as unknown as Record<string, unknown>);
 
     if (!config.jira && typeof legacyJiraBaseUrl === 'string' && legacyJiraBaseUrl.trim().length > 0) {
       return {
@@ -53,6 +53,41 @@ function isValidConfig(value: unknown): value is GliConfiguration {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+/**
+ * Merge `live`, migrate legacy top-level `liveInterval`, strip removed `watch`.
+ */
+function normalizeParsedConfig(raw: Record<string, unknown>): GliConfiguration {
+  const {
+    watch: _omitWatch,
+    liveInterval: legacyLiveInterval,
+    ...rest
+  } = raw as Record<string, unknown> & {
+    watch?: unknown;
+    liveInterval?: number;
+  };
+  const base = { ...rest } as unknown as GliConfiguration;
+  const liveIn = isRecord(raw['live']) ? raw['live'] : {};
+  const intervalFromNested = typeof liveIn['interval'] === 'number' ? liveIn['interval'] : undefined;
+  const autoRebaseFromNested = typeof liveIn['autoRebase'] === 'boolean' ? liveIn['autoRebase'] : undefined;
+
+  const live: LiveConfig = {
+    ...FULL_DEFAULT_CONFIG.live,
+    ...base.live,
+    interval:
+      intervalFromNested ??
+      (typeof legacyLiveInterval === 'number' ? legacyLiveInterval : undefined) ??
+      DEFAULT_LIVE_INTERVAL_SECONDS,
+    autoRebase: autoRebaseFromNested ?? base.live?.autoRebase ?? FULL_DEFAULT_CONFIG.live?.autoRebase,
+  };
+
+  return { ...base, live };
+}
+
+/** Seconds between `gli live` dashboard refreshes. */
+export function getLiveIntervalSeconds(config: GliConfiguration): number {
+  return config.live?.interval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
 }
 
 export function getConfigFilePath(): string {

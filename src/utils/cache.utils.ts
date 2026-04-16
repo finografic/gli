@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 import type { RepoSection } from 'utils/gh.utils.js';
+
 import { DEFAULT_CACHE_MAX_AGE_SECONDS } from 'config/defaults.constants.js';
 import { CACHE_FILE, CONFIG_PATH } from 'config/paths.constants';
 

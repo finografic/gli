@@ -93,7 +93,6 @@ Note: `DRAFT` is deprecated — use the `isDraft` field separately.
   5. On success: `git push --force-with-lease`
 - [ ] Detect default branch name: `gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'`
 - [ ] Support `--all` flag to batch-rebase all behind branches (with confirmation)
-- [ ] Dry-run mode: `--dry-run` flag that shows what would happen without executing
 
 **Depends on**: Phase 1 complete. Phase 2 optional (single-repo works fine).
 

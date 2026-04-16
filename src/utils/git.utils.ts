@@ -19,8 +19,8 @@ interface GetRemoteFromPathParams {
 }
 
 /**
- * Get GitHub remote (owner/repo) from a local git repository path.
- * Returns null if not found or not a GitHub repo.
+ * Get GitHub remote (owner/repo) from a local git repository path. Returns null if not found or not a GitHub
+ * repo.
  */
 export function getRemoteFromPath({ localPath }: GetRemoteFromPathParams): string | null {
   try {
@@ -36,8 +36,7 @@ export function getRemoteFromPath({ localPath }: GetRemoteFromPathParams): strin
 }
 
 /**
- * Get full GitHub URL from a local git repository path.
- * Returns null if not found or not a GitHub repo.
+ * Get full GitHub URL from a local git repository path. Returns null if not found or not a GitHub repo.
  */
 export function getGitHubUrlFromPath({ localPath }: GetRemoteFromPathParams): string | null {
   try {

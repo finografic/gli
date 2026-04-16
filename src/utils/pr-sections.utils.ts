@@ -4,6 +4,7 @@ import { getConfigFilePath, readConfig, tildeify } from 'utils/config.utils.js';
 import type { RepoInfo, RepoSection } from 'utils/gh.utils.js';
 import { fetchMyOpenPrs, fetchRepoInfo } from 'utils/gh.utils.js';
 import { computeColumnWidths, formatPrLines, terminalLink } from 'utils/pr-display.utils.js';
+
 import { DEFAULT_JIRA_BASE_URL, DEFAULT_JIRA_ISSUE_PREFIX } from 'config/defaults.constants.js';
 import { COMPACT_TOGGLE_KEY } from 'config/ui.constants.js';
 import type { JiraConfig } from 'types/config.types.js';
@@ -22,8 +23,8 @@ interface RenderDisplayParams {
 }
 
 /**
- * Render the PR status display. Used by `gli live` (loop) and `gli status` (once).
- * Pass `isLive: true` to include the refresh hint footer line.
+ * Render the PR status display. Used by `gli live` (loop) and `gli status` (once). Pass `isLive: true` to
+ * include the refresh hint footer line.
  */
 export function renderDisplay({
   sections,

@@ -40,7 +40,7 @@ Perfect for keeping a terminal panel open to monitor your pull requests in real-
 - Clickable PR numbers and repo names
 - Config path footer
 
-The refresh interval defaults to 60s and is configurable via `gli config edit` (`liveInterval`).
+The refresh interval defaults to 60s and is configurable via `gli config edit` (`live.interval`).
 
 ### `gli status`
 
@@ -61,7 +61,6 @@ gli rebase --all -y         # Rebase all, auto-accept prompts
 gli rebase -i               # Interactive rebase (manual pick/squash/edit)
 gli rebase -s               # Auto-squash multiple commits into one
 gli rebase --all --stay     # Rebase all, stay on last branch
-gli rebase --dry-run        # Preview without executing
 ```
 
 **Features:**
@@ -99,14 +98,15 @@ gli config edit      # Open config in $EDITOR
 
 **Config options** (all shown in the generated config file):
 
-| Key                          | Default   | Description                                        |
-| ---------------------------- | --------- | -------------------------------------------------- |
-| `liveInterval`               | `60`      | Refresh interval in seconds for `gli live`         |
-| `jira.baseUrl`               | _(unset)_ | Global Jira browse URL for branch ticket links     |
-| `jira.issuePrefix`           | _(unset)_ | Optional Jira key prefix filter (e.g. `SBS`)       |
-| `prListing.title.display`    | `false`   | Show PR title column                               |
-| `prListing.title.maxChars`   | `40`      | Max title characters to display                    |
-| `prListing.title.sliceStart` | `0`       | Skip N chars from title start (e.g. ticket prefix) |
+| Key                          | Default   | Description                                                               |
+| ---------------------------- | --------- | ------------------------------------------------------------------------- |
+| `live.interval`              | `60`      | Refresh interval in seconds for `gli live`                                |
+| `live.autoRebase`            | `false`   | Periodically run `gli rebase --all -y` while live (see `gli live --help`) |
+| `jira.baseUrl`               | _(unset)_ | Global Jira browse URL for branch ticket links                            |
+| `jira.issuePrefix`           | _(unset)_ | Optional Jira key prefix filter (e.g. `SBS`)                              |
+| `prListing.title.display`    | `false`   | Show PR title column                                                      |
+| `prListing.title.maxChars`   | `40`      | Max title characters to display                                           |
+| `prListing.title.sliceStart` | `0`       | Skip N chars from title start (e.g. ticket prefix)                        |
 
 ## Prerequisites
 

@@ -5,29 +5,31 @@ import type { GliConfiguration } from 'types/config.types';
 export const DEFAULT_CACHE_MAX_AGE_SECONDS = 10;
 
 export const DEFAULT_LIVE_INTERVAL_SECONDS = 60;
+/** When auto-rebase is on, run `gli rebase --all -y` every N dashboard refreshes (not every tick). */
+export const DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH = 4;
 export const DEFAULT_PR_TITLE_MAX_CHARS = 40;
 
 export const GITHUB_URL_PATTERN = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/;
 
 /**
- * Optional Jira base URL sourced from env.
- * Example: https://your-org.atlassian.net/browse
+ * Optional Jira base URL sourced from env. Example: https://your-org.atlassian.net/browse
  */
 export const DEFAULT_JIRA_BASE_URL = process.env['GLI_JIRA_BASE_URL'] || undefined;
 
 /**
- * Optional Jira issue prefix sourced from env.
- * Example: "SBS" → matches SBS-123
+ * Optional Jira issue prefix sourced from env. Example: "SBS" → matches SBS-123
  */
 export const DEFAULT_JIRA_ISSUE_PREFIX = process.env['GLI_JIRA_ISSUE_PREFIX'] || undefined;
 
 /**
- * Canonical config defaults.
- * Persisted on first run so the full shape is visible/editable by the user.
+ * Canonical config defaults. Persisted on first run so the full shape is visible/editable by the user.
  */
 export const FULL_DEFAULT_CONFIG: GliConfiguration = {
   repos: [],
-  liveInterval: DEFAULT_LIVE_INTERVAL_SECONDS,
+  live: {
+    interval: DEFAULT_LIVE_INTERVAL_SECONDS,
+    autoRebase: false,
+  },
   jira: {
     baseUrl: '',
     issuePrefix: '',

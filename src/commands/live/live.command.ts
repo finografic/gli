@@ -1,13 +1,19 @@
+import { spawn } from 'node:child_process';
 import { renderCommandHelp } from 'core/render-help/index.js';
 import logUpdate from 'log-update';
 import pc from 'picocolors';
 
 import { writeCache } from 'utils/cache.utils.js';
-import { readConfig } from 'utils/config.utils.js';
+import { getLiveIntervalSeconds, readConfig } from 'utils/config.utils.js';
 import type { RepoSection } from 'utils/gh.utils.js';
 import { assertGhAvailable } from 'utils/gh.utils.js';
 import { fetchPrSections, renderDisplay } from 'utils/pr-sections.utils.js';
-import { DEFAULT_LIVE_INTERVAL_SECONDS, DEFAULT_PR_TITLE_MAX_CHARS } from 'config/defaults.constants.js';
+
+import {
+  DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH,
+  DEFAULT_LIVE_INTERVAL_SECONDS,
+  DEFAULT_PR_TITLE_MAX_CHARS,
+} from 'config/defaults.constants.js';
 import { KEYCODES } from 'config/keycodes.constants';
 import {
   COMPACT_TOGGLE_KEY,
@@ -23,6 +29,9 @@ interface RunLiveCommandParams {
 // Module-level state shared between fetchAndDisplay, renderFromCache, and the keypress handler
 let isCompact = false;
 let cachedSections: RepoSection[] | null = null;
+/** Set at `runLiveCommand` start when argv contains `--auto-rebase`. */
+let sessionAutoRebase = false;
+let liveRefreshCount = 0;
 
 function renderFromCache(): void {
   if (!cachedSections) return;
@@ -30,7 +39,7 @@ function renderFromCache(): void {
   const showTitle = config.prListing?.title?.display ?? false;
   const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
   const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
-  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
+  const liveInterval = getLiveIntervalSeconds(config);
   const output = renderDisplay({
     sections: cachedSections,
     showTitle,
@@ -57,7 +66,7 @@ async function fetchAndDisplay(): Promise<void> {
     const showTitle = config.prListing?.title?.display ?? false;
     const titleMaxChars = config.prListing?.title?.maxChars ?? DEFAULT_PR_TITLE_MAX_CHARS;
     const titleSliceStart = config.prListing?.title?.sliceStart ?? DEFAULT_PR_TITLE_SLICE_START;
-    const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
+    const liveInterval = getLiveIntervalSeconds(config);
 
     const output = renderDisplay({
       sections,
@@ -71,14 +80,39 @@ async function fetchAndDisplay(): Promise<void> {
     });
 
     logUpdate(output);
+
+    liveRefreshCount++;
+    maybeSpawnAutoRebase();
   } catch (error: unknown) {
     logUpdate(`\n${pc.red('Error:')} ${error instanceof Error ? error.message : 'Unknown error'}\n`);
   }
 }
 
+function maybeSpawnAutoRebase(): void {
+  const config = readConfig();
+  const enabled = sessionAutoRebase || (config.live?.autoRebase ?? false);
+  if (!enabled) return;
+  if (liveRefreshCount % DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH !== 0) return;
+
+  const script = process.argv[1];
+  if (typeof script !== 'string' || script.length === 0) return;
+
+  try {
+    const child = spawn(process.execPath, [script, 'rebase', '--all', '-y'], {
+      cwd: process.cwd(),
+      stdio: 'ignore',
+      detached: true,
+      windowsHide: true,
+    });
+    child.unref();
+  } catch {
+    // ignore spawn failures
+  }
+}
+
 /**
- * Show a spinner via logUpdate while waiting for the first data fetch.
- * Returns a cleanup function that stops the spinner.
+ * Show a spinner via logUpdate while waiting for the first data fetch. Returns a cleanup function that stops
+ * the spinner.
  */
 function startSpinner(): () => void {
   let frame = 0;
@@ -99,11 +133,16 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
     renderCommandHelp({
       command: 'gli live',
       description: 'Live-updating PR status dashboard (⭐ RECOMMENDED)',
-      usage: 'gli live',
+      usage: 'gli live [options]',
       options: [
         {
           flag: '--compact',
           description: `Start in compact view (toggle anytime with [${COMPACT_TOGGLE_KEY.label}])`,
+        },
+        {
+          flag: '--auto-rebase',
+          description:
+            'Enable background auto-rebase for this session (`gli rebase --all -y` every few refreshes)',
         },
       ],
       examples: [
@@ -112,8 +151,12 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
           description: `Start live dashboard (refreshes every ${DEFAULT_LIVE_INTERVAL_SECONDS}s by default)`,
         },
         {
+          command: 'gli live --auto-rebase',
+          description: 'Same, plus periodic background rebase of stale PR branches',
+        },
+        {
           command: 'gli config edit',
-          description: 'Customize refresh interval and other settings',
+          description: 'Customize `live.interval`, `live.autoRebase`, and other settings',
         },
       ],
       sections: [
@@ -127,7 +170,9 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
   - Build and approval status columns
   - Config path footer
 
-  Refresh interval defaults to ${DEFAULT_LIVE_INTERVAL_SECONDS}s. Customize via \`gli config edit\` (liveInterval).`,
+  Refresh interval defaults to ${DEFAULT_LIVE_INTERVAL_SECONDS}s (\`live.interval\` in config).
+  Set \`live.autoRebase\` to true or pass \`--auto-rebase\` to run \`gli rebase --all -y\` in the
+  background every ${DEFAULT_AUTO_REBASE_EVERY_NTH_REFRESH}th refresh (not every tick).`,
         },
       ],
     });
@@ -141,6 +186,9 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
     console.error(pc.red('Error:'), error instanceof Error ? error.message : 'GitHub CLI not available');
     process.exit(1);
   }
+
+  sessionAutoRebase = argv.includes('--auto-rebase');
+  liveRefreshCount = 0;
 
   // Set initial compact state from flag
   isCompact = argv.includes('--compact');
@@ -172,7 +220,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
 
   // Read interval from config for the polling loop
   const config = readConfig();
-  const liveInterval = config.liveInterval ?? DEFAULT_LIVE_INTERVAL_SECONDS;
+  const liveInterval = getLiveIntervalSeconds(config);
   const intervalMs = liveInterval * 1000;
 
   setInterval(() => {

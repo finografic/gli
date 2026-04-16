@@ -7,7 +7,6 @@ Interactively select and rebase branches that are behind the default branch, the
 ```bash
 gli rebase              # Select a branch to rebase
 gli rebase --all        # Rebase all behind branches (with confirmation)
-gli rebase --dry-run    # Show what would happen without executing
 ```
 
 ## What It Does
@@ -29,7 +28,6 @@ gli rebase --dry-run    # Show what would happen without executing
 - Refuses to run with uncommitted changes (commit or stash first)
 - Uses `--force-with-lease` (not `--force`) to prevent overwriting upstream changes
 - On conflict: aborts the rebase automatically and provides instructions for manual resolution
-- `--dry-run` mode shows the plan without executing anything
 - Always returns to the original branch after completion
 
 ## Prerequisites
@@ -43,5 +41,4 @@ gli rebase --dry-run    # Show what would happen without executing
 | Flag           | Description                                          |
 | -------------- | ---------------------------------------------------- |
 | `--all`        | Rebase all branches that need it (with confirmation) |
-| `--dry-run`    | Show what would happen without executing             |
 | `--help`, `-h` | Show usage info                                      |

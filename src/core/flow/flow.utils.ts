@@ -1,10 +1,7 @@
 /**
- * @file flow.utils.ts — SHARED flow framework for @finografic CLI tools.
- *
- * ⚠️  AVOID EDITING THIS FILE DIRECTLY.
- *
- * The exported API surface and behaviour must remain identical across all repos.
- * Minor formatter adjustments (blank lines, trailing commas) are acceptable.
+ * @file Flow.utils.ts — SHARED flow framework for @finografic CLI tools. ⚠️ AVOID EDITING THIS FILE DIRECTLY.
+ *   The exported API surface and behaviour must remain identical across all repos. Minor formatter
+ *   adjustments (blank lines, trailing commas) are acceptable.
  */
 
 import * as clack from '@clack/prompts';

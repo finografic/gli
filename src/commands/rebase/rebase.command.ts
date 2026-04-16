@@ -12,8 +12,27 @@ import { assertGhAvailable, fetchDefaultBranch } from 'utils/gh.utils.js';
 import { formatPrLines } from 'utils/pr-display.utils.js';
 import { fetchPrSections } from 'utils/pr-sections.utils.js';
 
+const REBASE_FLAG_DEFS = {
+  all: { type: 'boolean' },
+  interactive: { alias: 'i', type: 'boolean' },
+  squash: { alias: 's', type: 'boolean' },
+  stay: { type: 'boolean' },
+  y: { type: 'boolean' },
+} as const;
+
 interface RunRebaseCommandParams {
   argv: string[];
+}
+
+export interface RebaseWorkflowOptions {
+  /** Suppress ordinary progress output (auto-rebase from `gli live`). */
+  silent?: boolean;
+  /**
+   * When true with `-y`, do not stop the whole run on the first failed rebase; call `onWarning` and continue
+   * to the next branch.
+   */
+  continueOnFailure?: boolean;
+  onWarning?: (message: string) => void;
 }
 
 interface RebaseBranchParams {
@@ -22,8 +41,9 @@ interface RebaseBranchParams {
   defaultBranch: string;
   interactive: boolean;
   squash: boolean;
-  dryRun: boolean;
   flow: FlowContext;
+  /** When set, omit step logs and use non-interactive git stdio. */
+  silent?: boolean;
 }
 
 interface RebaseBranchResult {
@@ -69,34 +89,33 @@ async function rebaseBranch({
   defaultBranch,
   interactive,
   squash,
-  dryRun,
   flow,
+  silent = false,
 }: RebaseBranchParams): Promise<RebaseBranchResult> {
-  if (dryRun) {
-    const mode = squash ? 'squash and rebase' : interactive ? 'interactively rebase' : 'rebase';
-    console.log(
-      `  ${pc.dim('[dry-run]')} Would ${mode} ${pc.bold(branch)} onto ${pc.bold(`origin/${defaultBranch}`)}`,
-    );
-    return { success: true, aborted: false };
-  }
+  /** Silent runs discard git chatter; interactive CLI rebase keeps TTY (`inherit`) when not silent. */
+  const rebaseStdio: 'inherit' | ('pipe' | 'ipc')[] = silent ? ['pipe', 'pipe', 'pipe'] : 'inherit';
 
   // Fetch origin
   try {
-    console.log(`  ${pc.dim('•')} Fetching origin...`);
+    if (!silent) console.log(`  ${pc.dim('•')} Fetching origin...`);
     execSync('git fetch origin', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
   } catch (error: unknown) {
-    console.log(`  ${pc.red('✗')} Fetch failed`);
-    console.log(`    ${pc.red(error instanceof Error ? error.message : 'Failed to fetch origin')}`);
+    if (!silent) {
+      console.log(`  ${pc.red('✗')} Fetch failed`);
+      console.log(`    ${pc.red(error instanceof Error ? error.message : 'Failed to fetch origin')}`);
+    }
     return { success: false, aborted: false };
   }
 
   // Checkout branch
   try {
-    console.log(`  ${pc.dim('•')} Checking out ${pc.cyan(branch)}...`);
+    if (!silent) console.log(`  ${pc.dim('•')} Checking out ${pc.cyan(branch)}...`);
     execSync(`git checkout ${branch}`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
   } catch (error: unknown) {
-    console.log(`  ${pc.red('✗')} Checkout failed`);
-    console.log(`    ${pc.red(error instanceof Error ? error.message : `Failed to checkout ${branch}`)}`);
+    if (!silent) {
+      console.log(`  ${pc.red('✗')} Checkout failed`);
+      console.log(`    ${pc.red(error instanceof Error ? error.message : `Failed to checkout ${branch}`)}`);
+    }
     return { success: false, aborted: false };
   }
 
@@ -106,28 +125,30 @@ async function rebaseBranch({
 
   if (squash) {
     const commitCount = getCommitCount({ defaultBranch });
-    console.log(
-      `  ${pc.dim('•')} Found ${commitCount} commit${
-        commitCount === 1 ? '' : 's'
-      } ahead of origin/${defaultBranch}`,
-    );
+    if (!silent) {
+      console.log(
+        `  ${pc.dim('•')} Found ${commitCount} commit${
+          commitCount === 1 ? '' : 's'
+        } ahead of origin/${defaultBranch}`,
+      );
+    }
 
     if (commitCount > 1) {
-      console.log(`  ${pc.dim('•')} Auto-squashing ${commitCount} commits...`);
+      if (!silent) console.log(`  ${pc.dim('•')} Auto-squashing ${commitCount} commits...`);
       rebaseCommand = `git rebase -i origin/${defaultBranch}`;
       rebaseEnv.GIT_SEQUENCE_EDITOR = "sed -i -e '2,$s/^pick/squash/'";
     } else if (commitCount === 1) {
-      console.log(`  ${pc.dim('•')} Single commit, using simple rebase`);
+      if (!silent) console.log(`  ${pc.dim('•')} Single commit, using simple rebase`);
       rebaseCommand = `git rebase origin/${defaultBranch}`;
     } else {
-      console.log(`  ${pc.yellow('⚠')} No commits to rebase`);
+      if (!silent) console.log(`  ${pc.yellow('⚠')} No commits to rebase`);
       return { success: false, aborted: false };
     }
   } else if (interactive) {
-    console.log(`  ${pc.dim('•')} Starting interactive rebase...`);
+    if (!silent) console.log(`  ${pc.dim('•')} Starting interactive rebase...`);
     rebaseCommand = `git rebase -i origin/${defaultBranch}`;
   } else {
-    console.log(`  ${pc.dim('•')} Rebasing onto origin/${defaultBranch}...`);
+    if (!silent) console.log(`  ${pc.dim('•')} Rebasing onto origin/${defaultBranch}...`);
     rebaseCommand = `git rebase origin/${defaultBranch}`;
   }
 
@@ -135,20 +156,22 @@ async function rebaseBranch({
   try {
     execSync(rebaseCommand, {
       encoding: 'utf-8',
-      stdio: 'inherit', // Show git's interactive editor if needed
+      stdio: rebaseStdio,
       env: rebaseEnv,
     });
-    console.log(`  ${pc.green('✓')} Rebase succeeded`);
+    if (!silent) console.log(`  ${pc.green('✓')} Rebase succeeded`);
   } catch {
-    console.log(`  ${pc.yellow('⚠')} Rebase conflict detected`);
-    console.log('');
-    console.log(`  ${pc.dim('Resolve conflicts manually, then run:')}`);
-    console.log(`    ${pc.cyan('git rebase --continue')}`);
-    console.log(`    ${pc.cyan(`git push --force-with-lease origin ${branch}`)}`);
-    console.log('');
-    console.log(`  ${pc.dim('Or abort:')}`);
-    console.log(`    ${pc.cyan('git rebase --abort')}`);
-    console.log('');
+    if (!silent) {
+      console.log(`  ${pc.yellow('⚠')} Rebase conflict detected`);
+      console.log('');
+      console.log(`  ${pc.dim('Resolve conflicts manually, then run:')}`);
+      console.log(`    ${pc.cyan('git rebase --continue')}`);
+      console.log(`    ${pc.cyan(`git push --force-with-lease origin ${branch}`)}`);
+      console.log('');
+      console.log(`  ${pc.dim('Or abort:')}`);
+      console.log(`    ${pc.cyan('git rebase --abort')}`);
+      console.log('');
+    }
 
     try {
       execSync('git rebase --abort', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
@@ -166,21 +189,23 @@ async function rebaseBranch({
     skipMessage: `  ${pc.dim('→')} Auto-pushing with --force-with-lease ${pc.dim('(-y)')}`,
   });
   if (!shouldPush) {
-    console.log(`  ${pc.dim('○')} Skipped push`);
+    if (!silent) console.log(`  ${pc.dim('○')} Skipped push`);
     return { success: true, aborted: false };
   }
 
   // Push with --force-with-lease
   try {
-    console.log(`  ${pc.dim('•')} Pushing with --force-with-lease...`);
+    if (!silent) console.log(`  ${pc.dim('•')} Pushing with --force-with-lease...`);
     execSync(`git push --force-with-lease origin ${branch}`, {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-    console.log(`  ${pc.green('✓')} Pushed ${pc.bold(branch)}`);
+    if (!silent) console.log(`  ${pc.green('✓')} Pushed ${pc.bold(branch)}`);
   } catch (error: unknown) {
-    console.log(`  ${pc.red('✗')} Push failed`);
-    console.log(`    ${pc.red(error instanceof Error ? error.message : 'Failed to push')}`);
+    if (!silent) {
+      console.log(`  ${pc.red('✗')} Push failed`);
+      console.log(`    ${pc.red(error instanceof Error ? error.message : 'Failed to push')}`);
+    }
     return { success: false, aborted: false };
   }
 
@@ -188,16 +213,8 @@ async function rebaseBranch({
 }
 
 export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
-  const flow = createFlowContext(argv, {
-    'dry-run': { type: 'boolean' },
-    'all': { type: 'boolean' },
-    'interactive': { alias: 'i', type: 'boolean' },
-    'squash': { alias: 's', type: 'boolean' },
-    'stay': { type: 'boolean' },
-    'y': { type: 'boolean' },
-  });
+  const flow = createFlowContext(argv, REBASE_FLAG_DEFS);
 
-  const dryRun = Boolean(flow.flags['dry-run']);
   const all = Boolean(flow.flags['all']);
   const interactive = Boolean(flow.flags['interactive']);
   const squash = Boolean(flow.flags['squash']);
@@ -229,10 +246,6 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
         {
           flag: '--stay',
           description: "Stay on rebased branch (don't return to original)",
-        },
-        {
-          flag: '--dry-run',
-          description: 'Show what would happen without executing',
         },
       ],
       examples: [
@@ -283,7 +296,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
     exit(1);
   }
 
-  if (!dryRun && hasUncommittedChanges()) {
+  if (hasUncommittedChanges()) {
     console.log(`  ${pc.red('✗')} You have uncommitted changes. Please commit or stash them first.`);
     console.log('');
     exit(1);
@@ -417,7 +430,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
     console.log('');
 
     // Per-branch confirm (only in --all mode; auto-accepted with -y)
-    if (all && !dryRun) {
+    if (all) {
       const confirmBranch = await promptConfirm(flow, {
         message: `Rebase ${pc.cyan(pr.headRefName)}?`,
         default: true,
@@ -437,7 +450,6 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
       defaultBranch,
       interactive,
       squash,
-      dryRun,
       flow,
     });
 
@@ -474,7 +486,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   }
 
   // Return to original branch (unless --stay or failed on last)
-  if (!dryRun && !stay && lastBranch !== originalBranch) {
+  if (!stay && lastBranch !== originalBranch) {
     try {
       execSync(`git checkout ${originalBranch}`, {
         encoding: 'utf-8',
@@ -491,13 +503,7 @@ export async function runRebaseCommand({ argv }: RunRebaseCommandParams) {
   console.log('');
 
   // Summary
-  if (dryRun) {
-    console.log(
-      `  ${pc.dim('Dry run complete —')} ${toRebase.length} branch${
-        toRebase.length === 1 ? '' : 'es'
-      } would be rebased`,
-    );
-  } else if (failed === 0) {
+  if (failed === 0) {
     console.log(`  ${pc.green('✓')} Rebased ${succeeded} branch${succeeded === 1 ? '' : 'es'} successfully`);
   } else {
     console.log(
