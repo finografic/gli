@@ -79,7 +79,7 @@ async function runAddRepo(): Promise<void> {
     return;
   }
 
-  addRepo({ localPath: pathToUse, remote });
+  await addRepo({ localPath: pathToUse, remote });
   clack.log.success(`Added ${pc.cyan(remote)}`);
   clack.log.info(`  ${pc.dim(tildeify(pathToUse))}`);
   clack.outro('Done');
