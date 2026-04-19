@@ -1,7 +1,7 @@
 {
   "name": "@finografic/gli",
   "type": "module",
-  "version": "1.22.0",
+  "version": "1.22.1",
   "description": "Git CLI, Live PR Dashboard",
   "homepage": "https://github.com/finografic/gli",
   "repository": {
