@@ -66,7 +66,7 @@
     "view:registry:github": "pnpm view @finografic/gli --registry=https://npm.pkg.github.com",
     "·········· PACKAGES": "··················································",
     "update:oxfmt-config": "pnpm update @finografic/oxfmt-config --latest && pnpm update oxfmt --latest",
-    "upgrade:deps:all": "pnpm update --latest",
+    "update:deps:all": "pnpm update --latest",
     "·········· UTILS": "·····················································",
     "tsc:debug": "tsc --pretty --project tsconfig.json",
     "typecheck": "tsc --project tsconfig.json --noEmit",
