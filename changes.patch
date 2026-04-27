@@ -1,0 +1,363 @@
+diff --git a/src/commands/live/live.command.ts b/src/commands/live/live.command.ts
+index d670967..e135e34 100644
+--- a/src/commands/live/live.command.ts
++++ b/src/commands/live/live.command.ts
+@@ -36,6 +36,7 @@ let refreshCount = 0;
+ let autoRebaseRunning = false;
+ let lastAutoRebaseResults: SilentRebaseResult[] | null = null;
+ let lastAutoRebaseTime: Date | null = null;
++let lastRefreshTime: Date | null = null;
+ let autoRebaseNumRefreshes = DEFAULT_AUTO_REBASE_NUM_REFRESHES;
+ 
+ function formatTimeAgo(date: Date): string {
+@@ -94,6 +95,7 @@ async function renderFromCache(): Promise<void> {
+     titleSliceStart: DEFAULT_PR_TITLE_SLICE_START,
+     liveInterval,
+     isLive: true,
++    refreshedAt: lastRefreshTime ?? undefined,
+     compact: isCompact,
+     jiraConfig: config.jira,
+     extraFooterLines: autoRebaseLine ? [autoRebaseLine] : undefined,
+@@ -125,6 +127,7 @@ async function fetchAndDisplay(): Promise<void> {
+     const sections = await fetchPrSections();
+     cachedSections = sections;
+     writeCache({ sections });
++    lastRefreshTime = new Date();
+ 
+     refreshCount++;
+ 
+@@ -140,6 +143,7 @@ async function fetchAndDisplay(): Promise<void> {
+       titleSliceStart: DEFAULT_PR_TITLE_SLICE_START,
+       liveInterval,
+       isLive: true,
++      refreshedAt: lastRefreshTime,
+       compact: isCompact,
+       jiraConfig: config.jira,
+       extraFooterLines: autoRebaseLine ? [autoRebaseLine] : undefined,
+@@ -199,6 +203,7 @@ export async function runLiveCommand({ argv }: RunLiveCommandParams): Promise<vo
+   autoRebaseRunning = false;
+   lastAutoRebaseResults = null;
+   lastAutoRebaseTime = null;
++  lastRefreshTime = null;
+ 
+   // Set up raw keypress listener for hotkey toggle.
+   // Wrapped in try/catch because setRawMode throws when stdin is not a TTY
+diff --git a/src/commands/live/live.help.ts b/src/commands/live/live.help.ts
+index eaf7e26..db70db0 100644
+--- a/src/commands/live/live.help.ts
++++ b/src/commands/live/live.help.ts
+@@ -15,7 +15,7 @@ export const liveHelp: CommandHelpConfig = {
+     },
+     {
+       flag: '--auto-rebase',
+-      description: 'Silently rebase stale branches every 4 refreshes by default',
++      description: 'Silently rebase stale branches every 4 refreshes',
+     },
+   ],
+   examples: [
+diff --git a/src/commands/status/status.command.ts b/src/commands/status/status.command.ts
+index b1c6207..2e2fd73 100644
+--- a/src/commands/status/status.command.ts
++++ b/src/commands/status/status.command.ts
+@@ -47,6 +47,7 @@ export async function runStatusCommand({ argv }: RunStatusCommandParams): Promis
+       titleSliceStart: DEFAULT_PR_TITLE_SLICE_START,
+       liveInterval,
+       isLive: false,
++      refreshedAt: new Date(),
+       compact,
+       jiraConfig: config.jira,
+     });
+diff --git a/src/utils/pr-display.utils.ts b/src/utils/pr-display.utils.ts
+index 9f7eda6..51b4075 100644
+--- a/src/utils/pr-display.utils.ts
++++ b/src/utils/pr-display.utils.ts
+@@ -1,3 +1,4 @@
++import { stripVTControlCharacters } from 'node:util';
+ import pc from 'picocolors';
+ 
+ import { isJiraLinksEnabled } from 'utils/config.utils.js';
+@@ -9,6 +10,31 @@ interface StatusDisplay {
+   label: string;
+ }
+ 
++const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
++
++function getDisplayWidth(text: string): number {
++  const plainText = stripVTControlCharacters(text);
++  let width = 0;
++
++  for (const { segment } of graphemeSegmenter.segment(plainText)) {
++    width += getGraphemeWidth(segment);
++  }
++
++  return width;
++}
++
++function getGraphemeWidth(grapheme: string): number {
++  if (grapheme.length === 0) {
++    return 0;
++  }
++
++  if (/^(?:[\p{Control}\p{Mark}\uFE0E\uFE0F]|\u200D)+$/u.test(grapheme)) {
++    return 0;
++  }
++
++  return /\p{Extended_Pictographic}/u.test(grapheme) ? 2 : 1;
++}
++
+ export function getUnresolvedCommentsBadge({ pr }: { pr: PrStatus }): string {
+   if (pr.unresolvedCommentsCount <= 0) return '';
+   return `💬\u2009${pc.dim(pr.unresolvedCommentsCount)}`;
+@@ -179,9 +205,9 @@ export function formatPrLine({
+   const unresolvedCommentsBadge = getUnresolvedCommentsBadge({ pr });
+ 
+   // Shared padding
+-  const prNumPadding = prNumWidth > 0 ? prNumWidth - prNumText.length : 0;
+-  const branchPadding = branchWidth > 0 ? branchWidth - pr.headRefName.length : 0;
+-  const commentsPadding = commentsWidth > 0 ? commentsWidth - unresolvedCommentsBadge.length : 0;
++  const prNumPadding = prNumWidth > 0 ? prNumWidth - getDisplayWidth(prNumText) : 0;
++  const branchPadding = branchWidth > 0 ? branchWidth - getDisplayWidth(pr.headRefName) : 0;
++  const commentsPadding = commentsWidth > 0 ? commentsWidth - getDisplayWidth(unresolvedCommentsBadge) : 0;
+   const commentsPart = commentsWidth > 0 ? `  ${unresolvedCommentsBadge}${' '.repeat(commentsPadding)}` : '';
+ 
+   if (compact) {
+@@ -189,8 +215,8 @@ export function formatPrLine({
+     const buildStatusText = buildDisplay.color(buildText);
+     const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
+     const approvalStatusText = approvalDisplay.color(approvalText);
+-    const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
+-    const approvalPadding = approvalWidth > 0 ? approvalWidth - approvalText.length : 0;
++    const buildPadding = buildWidth > 0 ? buildWidth - getDisplayWidth(buildText) : 0;
++    const approvalPadding = approvalWidth > 0 ? approvalWidth - getDisplayWidth(approvalText) : 0;
+     return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${' '.repeat(
+       branchPadding,
+     )}  ${buildStatusText}${' '.repeat(buildPadding)}  ${approvalStatusText}${' '.repeat(
+@@ -203,8 +229,8 @@ export function formatPrLine({
+   const buildStatusText = buildDisplay.color(buildText);
+   const approvalText = `${approvalDisplay.symbol} ${approvalDisplay.label}`;
+   const approvalStatusText = approvalDisplay.color(approvalText);
+-  const buildPadding = buildWidth > 0 ? buildWidth - buildText.length : 0;
+-  const approvalPadding = approvalWidth > 0 ? approvalWidth - approvalText.length : 0;
++  const buildPadding = buildWidth > 0 ? buildWidth - getDisplayWidth(buildText) : 0;
++  const approvalPadding = approvalWidth > 0 ? approvalWidth - getDisplayWidth(approvalText) : 0;
+ 
+   // Optional title column — trim front/back whitespace, then slice from start
+   let titlePart = '';
+@@ -214,7 +240,7 @@ export function formatPrLine({
+       maxChars: titleWidth,
+       sliceStart: titleSliceStart,
+     });
+-    titlePart = `  ${pc.white(truncated)}${' '.repeat(titleWidth - truncated.length)}`;
++    titlePart = `  ${pc.white(truncated)}${' '.repeat(titleWidth - getDisplayWidth(truncated))}`;
+   }
+ 
+   return `${prNumber}${' '.repeat(prNumPadding)}  ${branch}${' '.repeat(
+@@ -264,19 +290,20 @@ export function formatPrLines({
+ 
+   // Use provided widths or compute from this batch
+   const prNumWidth = prNumWidthOverride ?? Math.max(...prs.map((pr) => `PR#${pr.number}`.length));
+-  const branchWidth = branchWidthOverride ?? Math.max(...prs.map((pr) => pr.headRefName.length));
++  const branchWidth = branchWidthOverride ?? Math.max(...prs.map((pr) => getDisplayWidth(pr.headRefName)));
+   // Compact mode never shows title; full mode respects showTitle
+   const titleWidth =
+     titleWidthOverride ??
+     (!compact && showTitle
+       ? Math.max(
+-          ...prs.map(
+-            (pr) =>
++          ...prs.map((pr) =>
++            getDisplayWidth(
+               truncatePrTitle({
+                 title: pr.title,
+                 maxChars: titleMaxChars,
+                 sliceStart: titleSliceStart,
+-              }).length,
++              }),
++            ),
+           ),
+         )
+       : 0);
+@@ -285,7 +312,7 @@ export function formatPrLines({
+     Math.max(
+       ...prs.map((pr) => {
+         const d = getBuildStatusDisplay({ pr });
+-        return `${d.symbol} ${d.label}`.length;
++        return getDisplayWidth(`${d.symbol} ${d.label}`);
+       }),
+     );
+ 
+@@ -294,12 +321,13 @@ export function formatPrLines({
+     Math.max(
+       ...prs.map((pr) => {
+         const display = getApprovalStatusDisplay({ pr });
+-        return `${display.symbol} ${display.label}`.length;
++        return getDisplayWidth(`${display.symbol} ${display.label}`);
+       }),
+     );
+ 
+   const commentsWidth =
+-    commentsWidthOverride ?? Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length));
++    commentsWidthOverride ??
++    Math.max(...prs.map((pr) => getDisplayWidth(getUnresolvedCommentsBadge({ pr }))));
+ 
+   return prs.map((pr) =>
+     formatPrLine({
+@@ -332,21 +360,21 @@ export function computeColumnWidths({ prs }: { prs: PrStatus[] }): {
+     return { prNumWidth: 0, branchWidth: 0, buildWidth: 0, approvalWidth: 0, commentsWidth: 0 };
+   }
+   return {
+-    prNumWidth: Math.max(...prs.map((pr) => `PR#${pr.number}`.length)),
+-    branchWidth: Math.max(...prs.map((pr) => pr.headRefName.length)),
++    prNumWidth: Math.max(...prs.map((pr) => getDisplayWidth(`PR#${pr.number}`))),
++    branchWidth: Math.max(...prs.map((pr) => getDisplayWidth(pr.headRefName))),
+     buildWidth: Math.max(
+       ...prs.map((pr) => {
+         const d = getBuildStatusDisplay({ pr });
+-        return `${d.symbol} ${d.label}`.length;
++        return getDisplayWidth(`${d.symbol} ${d.label}`);
+       }),
+     ),
+     approvalWidth: Math.max(
+       ...prs.map((pr) => {
+         const display = getApprovalStatusDisplay({ pr });
+-        return `${display.symbol} ${display.label}`.length;
++        return getDisplayWidth(`${display.symbol} ${display.label}`);
+       }),
+     ),
+-    commentsWidth: Math.max(...prs.map((pr) => getUnresolvedCommentsBadge({ pr }).length)),
++    commentsWidth: Math.max(...prs.map((pr) => getDisplayWidth(getUnresolvedCommentsBadge({ pr })))),
+   };
+ }
+ 
+@@ -364,13 +392,14 @@ export function computeTitleColumnWidth({
+   }
+ 
+   return Math.max(
+-    ...prs.map(
+-      (pr) =>
++    ...prs.map((pr) =>
++      getDisplayWidth(
+         truncatePrTitle({
+           title: pr.title,
+           maxChars: titleMaxChars,
+           sliceStart: titleSliceStart,
+-        }).length,
++        }),
++      ),
+     ),
+   );
+ }
+@@ -388,10 +417,11 @@ export function formatSelectOptions({
+   titleMaxChars?: number;
+   titleSliceStart?: number;
+ }): Array<{ value: string; label: string }> {
+-  const branchWidth = Math.max(...prs.map((pr) => pr.headRefName.length));
++  const branchWidth = Math.max(...prs.map((pr) => getDisplayWidth(pr.headRefName)));
+ 
+   return prs.map((pr) => {
+-    const branch = pc.cyan(pr.headRefName.padEnd(branchWidth));
++    const branchPadding = branchWidth - getDisplayWidth(pr.headRefName);
++    const branch = pc.cyan(`${pr.headRefName}${' '.repeat(branchPadding)}`);
+     const truncated = truncatePrTitle({
+       title: pr.title,
+       maxChars: titleMaxChars,
+diff --git a/src/utils/pr-sections.utils.ts b/src/utils/pr-sections.utils.ts
+index a131b3c..c204f48 100644
+--- a/src/utils/pr-sections.utils.ts
++++ b/src/utils/pr-sections.utils.ts
+@@ -23,11 +23,31 @@ interface RenderDisplayParams {
+   titleSliceStart: number;
+   liveInterval: number;
+   isLive: boolean;
++  refreshedAt?: Date;
+   compact?: boolean;
+   jiraConfig?: JiraConfig;
+   extraFooterLines?: string[];
+ }
+ 
++function getRefreshStatus({
++  liveInterval,
++  refreshedAt,
++}: {
++  liveInterval: number;
++  refreshedAt?: Date;
++}): string {
++  const refreshLabel = refreshedAt
++    ? `last refresh ${refreshedAt.toLocaleTimeString('en-US', {
++        hour12: false,
++        hour: '2-digit',
++        minute: '2-digit',
++        second: '2-digit',
++      })}`
++    : 'last refresh --:--:--';
++
++  return `Refreshing every ${liveInterval}s · ${refreshLabel}`;
++}
++
+ /**
+  * Render the PR status display. Used by `gli live` (loop) and `gli status` (once). Pass `isLive: true` to
+  * include the refresh hint footer line.
+@@ -39,23 +59,16 @@ export function renderDisplay({
+   titleSliceStart,
+   liveInterval,
+   isLive,
++  refreshedAt,
+   compact = false,
+   jiraConfig,
+   extraFooterLines,
+ }: RenderDisplayParams): string {
+   const lines: string[] = [];
+ 
+-  const now = new Date();
+   lines.push('');
+   lines.push(
+-    `${pc.bold('📊 PRs LIVE Status')} ${pc.dim(
+-      `- refreshed ${now.toLocaleTimeString('en-US', {
+-        hour12: false,
+-        hour: '2-digit',
+-        minute: '2-digit',
+-        second: '2-digit',
+-      })}`,
+-    )}${compact ? `  ${pc.dim('[compact]')}` : ''}`,
++    `${pc.bold('📊 PRs LIVE Status')}${compact ? `  ${pc.dim('[compact]')}` : ''} ${pc.dim(`· ${isLive ? getRefreshStatus({ liveInterval, refreshedAt }) : ''}`)}`,
+   );
+ 
+   lines.push('');
+@@ -98,7 +111,7 @@ export function renderDisplay({
+         url: pullsUrl,
+         label: pc.bold(pc.white(repoInfo.nameWithOwner)),
+       });
+-      lines.push(`  ${repoLink}`);
++      lines.push(pc.dim(`  ${repoLink}`));
+     }
+ 
+     if (error) {
+@@ -122,16 +135,20 @@ export function renderDisplay({
+     lines.push('');
+   }
+ 
+-  lines.push(`  ${pc.dim(tildeify(getConfigFilePath()))}`);
+-
+-  lines.push('');
++  // lines.push(`  ${pc.dim(`// ${tildeify(getConfigFilePath())}`)}`);
+ 
+   if (isLive) {
+-    lines.push(
+-      pc.dim(
+-        `  Refreshing every ${liveInterval}s · [${COMPACT_TOGGLE_KEY.label}] toggle compact · Ctrl+C to exit`,
+-      ),
+-    );
++    lines.push(pc.dim(`  [${COMPACT_TOGGLE_KEY.label}] toggle compact · Ctrl+C to exit`));
++    // const refreshLabel = refreshedAt
++    //   ? `last refresh ${refreshedAt.toLocaleTimeString('en-US', {
++    //       hour12: false,
++    //       hour: '2-digit',
++    //       minute: '2-digit',
++    //       second: '2-digit',
++    //     })}`
++    //   : 'last refresh --:--:--';
++
++    // lines.push(pc.dim(`  Refreshing every ${liveInterval}s · ${refreshLabel}`));
+   }
+ 
+   if (extraFooterLines) {
